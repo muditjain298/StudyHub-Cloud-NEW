@@ -16,7 +16,7 @@ function ShareModal({ shareType, section, folderId, fileId, onClose, token: user
     setGenerating(true);
     try {
       const res = await axios.post(
-        'http://localhost:5000/api/shares',
+        'api/shares',
         {
           shareType,
           section: section || '',

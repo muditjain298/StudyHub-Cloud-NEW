@@ -15,7 +15,7 @@ function SharedView() {
   const fetchShare = async (pwd = null) => {
     setChecking(true);
     try {
-      const res = await axios.post(`http://localhost:5000/api/shares/${token}/access`, {
+      const res = await axios.post(`/api/shares/${token}/access`, {
         password: pwd || undefined,
       });
       setData(res.data);

@@ -22,7 +22,7 @@ function ResetPassword() {
     setLoading(true);
     setError('');
     try {
-      await axios.post(`http://localhost:5000/api/auth/resetpassword/${token}`, { password });
+      await axios.post(`/api/auth/resetpassword/${token}`, { password });
       setDone(true);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
