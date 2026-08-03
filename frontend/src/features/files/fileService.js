@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = "/api/auth";
+const FOLDER_URL = "/api/folders";
+const FILE_URL = "/api/files";
 
 const getFolders = async (section, parentId, token) => {
   const config = {
@@ -13,7 +14,7 @@ const getFolders = async (section, parentId, token) => {
     }
   };
 
-  const response = await axios.get(API_URL + 'folders', config);
+ const response = await axios.get(FOLDER_URL, config);
   return response.data;
 };
 
@@ -23,8 +24,7 @@ const createFolder = async (folderData, token) => {
       Authorization: `Bearer ${token}`,
     },
   };
-
-  const response = await axios.post(API_URL + 'folders', folderData, config);
+const response = await axios.post(FOLDER_URL, folderData, config);
   return response.data;
 };
 
@@ -34,8 +34,7 @@ const deleteFolder = async (folderId, token) => {
       Authorization: `Bearer ${token}`,
     },
   };
-
-  const response = await axios.delete(API_URL + 'folders/' + folderId, config);
+const response = await axios.delete(`${FOLDER_URL}/${folderId}`, config);
   return response.data;
 };
 
@@ -50,7 +49,7 @@ const getFiles = async (section, folderId, token) => {
     }
   };
 
-  const response = await axios.get(API_URL + 'files', config);
+const response = await axios.get(FILE_URL, config);
   return response.data;
 };
 
@@ -73,7 +72,7 @@ const uploadLink = async (linkData, token) => {
     },
   };
 
-  const response = await axios.post(API_URL + 'files', linkData, config);
+const response = await axios.post(FILE_URL, linkData, config);
   return response.data;
 };
 
@@ -84,7 +83,7 @@ const fetchMetadata = async (url, token) => {
     },
   };
 
-  const response = await axios.post(API_URL + 'files/metadata', { url }, config);
+ const response = await axios.post(`${FILE_URL}/metadata`, { url }, config);
   return response.data;
 };
 
@@ -95,7 +94,7 @@ const deleteFile = async (fileId, token) => {
     },
   };
 
-  const response = await axios.delete(API_URL + 'files/' + fileId, config);
+const response = await axios.delete(`${FILE_URL}/${fileId}`, config);
   return response.data;
 };
 
