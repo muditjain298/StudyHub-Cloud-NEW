@@ -36,12 +36,30 @@ function ShareModal({ shareType, section, folderId, fileId, onClose, token: user
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedLink);
+ const handleCopy = async () => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(generatedLink);
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = generatedLink;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+    }
+
     setCopied(true);
-    toast.success('Link copied to clipboard!');
+    toast.success("Link copied!");
     setTimeout(() => setCopied(false), 2000);
-  };
+  } catch (err) {
+    toast.error("Copy failed");
+    console.error(err);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
