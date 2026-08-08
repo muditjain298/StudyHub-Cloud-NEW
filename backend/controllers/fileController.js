@@ -51,7 +51,7 @@ const uploadFile = async (req, res) => {
       name = req.file.originalname;
       
       // Construct local URL. Using a relative path starting with /uploads
-      fileUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+     fileUrl = `${process.env.BACKEND_URL}/uploads/${req.file.filename}`;
     } else if (req.body.fileUrl) {
       // Handle Video Links directly via URL
       fileUrl = req.body.fileUrl;

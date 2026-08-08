@@ -177,7 +177,7 @@ const forgotPassword = async (req, res) => {
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
     await user.save({ validateBeforeSave: false });
 
-    const resetUrl = `http://localhost:5174/resetpassword/${resetToken}`;
+       resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
