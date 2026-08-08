@@ -1,8 +1,7 @@
 import axios from 'axios';
-
-const FOLDER_URL = "/api/folders";
-const FILE_URL = "/api/files";
-
+const API_BASE = import.meta.env.VITE_API_URL; 
+const FOLDER_URL = `${API_BASE}/api/folders`; 
+const FILE_URL = `${API_BASE}/api/files`;
 const getFolders = async (section, parentId, token) => {
   const config = {
     headers: {
