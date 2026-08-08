@@ -60,8 +60,7 @@ const uploadFile = async (formData, token) => {
       'Content-Type': 'multipart/form-data',
     },
   };
-
-  const response = await axios.post(API_URL + 'files', formData, config);
+const response = await axios.post(FILE_URL, formData, config);
   return response.data;
 };
 
