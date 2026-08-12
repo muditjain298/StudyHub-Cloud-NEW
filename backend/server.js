@@ -68,4 +68,7 @@ mongoose.connect(MONGO_URI)
     console.error('MongoDB connection error:', err);
   });
 
+app.get("/", (req, res) => {
+  res.send("StudyHub Backend Running");
+});
   module.exports = app;
