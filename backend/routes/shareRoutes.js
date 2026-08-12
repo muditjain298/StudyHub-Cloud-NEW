@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createShare, accessShare, getMyShares, deleteShare } = require('../controllers/shareController');
+const {createShare, accessShare, getMyShares, deleteShare} = require('../controllers/shareController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.route('/')
