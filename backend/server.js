@@ -4,7 +4,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const http = require('http');
+const cors = require('cors');
 const { Server } = require('socket.io');
+
 
 const authRoutes = require('./routes/authRoutes');
 const folderRoutes = require('./routes/folderRoutes');
@@ -21,6 +23,7 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors());
+app.use(cors({ origin: 'https://study-hub-cloud-new.vercel.app', credentials: true }));
 app.use(express.json());
 
 // Routes
