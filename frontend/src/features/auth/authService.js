@@ -1,7 +1,7 @@
 // frontend/src/features/auth/authService.js
 
 import { account } from '../../lib/appwrite';
-
+import { ID } from 'appwrite';
 // Register user
 export const register = async ({ name, email, password }) => {
   // Create account
