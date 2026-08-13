@@ -5,7 +5,7 @@ import { Client, Account } from 'appwrite';
 const client = new Client();
 
 client
-  .setEndpoint('https://cloud.appwrite.io/v1')
+  .setEndpoint('https://sgp.cloud.appwrite.io/v1')
 .setProject('6a7d7d73000d5a0b6a27');
 
 export const account = new Account(client);
