@@ -6,6 +6,6 @@ const client = new Client();
 
 client
   .setEndpoint('https://cloud.appwrite.io/v1')
-  .setProject('6a7d7e1000ed146842c');
+.setProject('6a7d7d73000d5a0b6a27');
 
 export const account = new Account(client);
