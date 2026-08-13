@@ -1,38 +1,45 @@
-import axios from 'axios';
+// frontend/src/features/auth/authService.js
 
-const API_URL = import.meta.env.VITE_API_URL + '/auth/';
+import { account } from '../../lib/appwrite';
 
 // Register user
-const register = async (userData) => {
-  const response = await axios.post(API_URL + 'register', userData);
+export const register = async ({ name, email, password }) => {
+  // Create account
+  await account.create('unique()', email, password, name);
 
-  if (response.data) {
-    localStorage.setItem('user', JSON.stringify(response.data));
-  }
+  // Auto login after register
+  await account.createEmailPasswordSession(email, password);
 
-  return response.data;
+  // Return current user
+  return await account.get();
 };
 
 // Login user
-const login = async (userData) => {
-  const response = await axios.post(API_URL + 'login', userData);
+export const login = async ({ email, password }) => {
+  await account.createEmailPasswordSession(email, password);
 
-  if (response.data) {
-    localStorage.setItem('user', JSON.stringify(response.data));
-  }
-
-  return response.data;
+  return await account.get();
 };
 
 // Logout user
-const logout = () => {
-  localStorage.removeItem('user');
+export const logout = async () => {
+  await account.deleteSession('current');
+};
+
+// Get current logged in user
+export const getCurrentUser = async () => {
+  try {
+    return await account.get();
+  } catch (error) {
+    return null;
+  }
 };
 
 const authService = {
   register,
-  logout,
   login,
+  logout,
+  getCurrentUser,
 };
 
 export default authService;
