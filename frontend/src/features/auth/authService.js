@@ -14,7 +14,7 @@ export const register = async ({ name, email, password }) => {
             return await account.get(); };
    // Logout user 
    export const logout = async () => {
-     await account.deleteSession('current'); }; 
+     await account.deleteSession({ sessionId: 'current' }); };
      // Get current logged in user 
      export const getCurrentUser = async () => {
        try {
