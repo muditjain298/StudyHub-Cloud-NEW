@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Navigate,useNavigate, Link } from 'react-router-dom';
-import { account } from '../lib/appwrite'; // Path check kar lena
-
+import { Navigate, useNavigate, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { account } from '../lib/appwrite';
 const API = "/api/auth";
 
 function Login() {
