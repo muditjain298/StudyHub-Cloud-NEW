@@ -1,9 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
-import { login, reset } from '../features/auth/authSlice';
-import { BookOpen, Mail, Phone, Eye, EyeOff, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { account } from './appwriteConfig'; // Path check kar lena
 
 const API = "/api/auth";
 
@@ -32,11 +29,28 @@ function Login() {
   const dispatch = useDispatch();
   const { user, isLoading, isError, isSuccess, message } = useSelector((s) => s.auth);
 
+const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useEffect(() => {
-    if (isError) alert(message);
-    if (isSuccess || user) navigate('/');
-    dispatch(reset());
-  }, [user, isError, isSuccess, message, navigate, dispatch]);
+    const checkUserSession = async () => {
+      try {
+        const currentAccount = await account.get();
+        if (currentAccount) {
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+    checkUserSession();
+  }, []);
+
+  if (isCheckingAuth) {
+    return <div className="flex h-screen items-center justify-center">Loading StudyHub...</div>;
+  }
 
   const onEmailLogin = (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route,Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -7,9 +7,38 @@ import Layout from './components/Layout';
 import SectionView from './pages/SectionView';
 import ResetPassword from './pages/ResetPassword';
 import SharedView from './pages/SharedView';
+import { useEffect, useState } from 'react';
+import { account } from './appwriteConfig'; 
 
 function App() {
-  return (
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkUserSession = async () => {
+      try {
+        const currentAccount = await account.get();
+        if (currentAccount) {
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+    checkUserSession();
+  }, []);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <h2 className="text-xl font-bold text-indigo-600">Loading StudyHub...</h2>
+      </div>
+    );
+  }
+
+return (
     <>
       <Toaster
         position="top-right"
@@ -26,11 +55,14 @@ function App() {
       />
       <Router>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          {/* Agar login hai, toh wapas Home (/) par bhej do */}
+          <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/resetpassword/:token" element={<ResetPassword />} />
           <Route path="/share/:token" element={<SharedView />} />
-          <Route path="/" element={<Layout />}>
+          
+          {/* Main Layout ko bhi protect kar diya: Agar login nahi hai, toh Login page par bhej do */}
+          <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" />}>
             <Route index element={<Dashboard />} />
             <Route path="notes" element={<SectionView sectionName="Notes" />} />
             <Route path="videos" element={<SectionView sectionName="Video Links" />} />
