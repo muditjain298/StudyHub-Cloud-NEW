@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route,Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -30,15 +30,16 @@ function App() {
     checkUserSession();
   }, []);
 
+  // Jab tak Appwrite server se response nahi aata, tab tak sirf ye loading dikhegi (Koi redirection nahi!)
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <h2 className="text-xl font-bold text-indigo-600">Loading StudyHub...</h2>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <h2 className="text-xl font-bold text-indigo-400 animate-pulse">Loading StudyHub...</h2>
       </div>
     );
   }
 
-return (
+  return (
     <>
       <Toaster
         position="top-right"
@@ -55,14 +56,14 @@ return (
       />
       <Router>
         <Routes>
-          {/* Agar login hai, toh wapas Home (/) par bhej do */}
-          <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
+          {/* Login Route: Agar authenticated hai toh Dashboard par bhejo, nahi toh Login page dikhao */}
+          <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/resetpassword/:token" element={<ResetPassword />} />
           <Route path="/share/:token" element={<SharedView />} />
           
-          {/* Main Layout ko bhi protect kar diya: Agar login nahi hai, toh Login page par bhej do */}
-          <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" />}>
+          {/* Protected Main Layout Route */}
+          <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" replace />}>
             <Route index element={<Dashboard />} />
             <Route path="notes" element={<SectionView sectionName="Notes" />} />
             <Route path="videos" element={<SectionView sectionName="Video Links" />} />
@@ -70,6 +71,9 @@ return (
             <Route path="reports" element={<SectionView sectionName="Reports" />} />
             <Route path="ppts" element={<SectionView sectionName="PPTs" />} />
           </Route>
+
+          {/* Fallback for unknown URLs */}
+          <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
         </Routes>
       </Router>
     </>
