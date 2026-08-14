@@ -8,7 +8,7 @@ import SectionView from './pages/SectionView';
 import ResetPassword from './pages/ResetPassword';
 import SharedView from './pages/SharedView';
 import { useEffect, useState } from 'react';
-import { account } from './appwriteConfig'; 
+import { account } from './lib/appwrite'; 
 
 function App() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
