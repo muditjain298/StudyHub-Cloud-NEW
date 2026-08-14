@@ -32,12 +32,8 @@ function App() {
 
   // Jab tak Appwrite server se response nahi aata, tab tak sirf ye loading dikhegi (Koi redirection nahi!)
   if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <h2 className="text-xl font-bold text-indigo-400 animate-pulse">Loading StudyHub...</h2>
-      </div>
-    );
-  }
+  return <div className="flex h-screen items-center justify-center">Loading StudyHub...</div>;
+}
 
   return (
     <>
