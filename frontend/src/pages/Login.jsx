@@ -35,7 +35,7 @@ function Login() {
 const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     const checkUserSession = async () => {
       try {
         const currentAccount = await account.get();
@@ -59,7 +59,16 @@ const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     e.preventDefault();
     dispatch(login(formData));
   };
-
+const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    try {
+      // Direct Appwrite session creation
+      await account.createEmailPasswordSession(formData.email, formData.password);
+      navigate('/dashboard'); // Seedha dashboard bhej do
+    } catch (error) {
+      console.error("Login failed:", error.message);
+    }
+  };
   const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!phone) return alert('Please enter your phone number');
