@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { account } from '../lib/appwrite';
+import { login } from '../features/auth/authSlice'; // (Path apne project ke hisab se check kar lena)
 import { BookOpen, Mail, Phone, Eye, EyeOff, Loader2 } from 'lucide-react';
+
 const API = "/api/auth";
 
 function Login() {
