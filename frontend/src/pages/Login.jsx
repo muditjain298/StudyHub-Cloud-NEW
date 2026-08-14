@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate,useNavigate } from 'react-router-dom';
+import { Navigate,useNavigate, link } from 'react-router-dom';
 import { account } from '../lib/appwrite'; // Path check kar lena
 
 const API = "/api/auth";
