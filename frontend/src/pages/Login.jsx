@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { account } from './appwriteConfig'; // Path check kar lena
+import { account } from '../appwriteConfig'; // Path check kar lena
 
 const API = "/api/auth";
 
