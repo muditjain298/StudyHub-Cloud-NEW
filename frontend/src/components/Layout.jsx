@@ -12,9 +12,7 @@ function Layout() {
     dispatch(reset());
   };
 
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
+  // LOOP WALA CODE HATA DIYA HAI (if (!user) return <Navigate... />)
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
@@ -52,12 +50,14 @@ function Layout() {
           <div className="group block w-full flex-shrink-0">
             <div className="flex items-center">
               <div>
-                <div className="inline-block h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold">
-                  {user.name.charAt(0)}
+                <div className="inline-block h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold uppercase">
+                  {/* SAFE RENDER */}
+                  {user?.name?.charAt(0) || 'U'}
                 </div>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{user.name}</p>
+                {/* SAFE RENDER */}
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{user?.name || 'User'}</p>
                 <button onClick={onLogout} className="text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 flex items-center mt-1">
                   <LogOut className="w-3 h-3 mr-1" /> Logout
                 </button>
