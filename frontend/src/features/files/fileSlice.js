@@ -14,11 +14,16 @@ export const fetchFolders = createAsyncThunk(
   'files/fetchFolders',
   async (_, thunkAPI) => {
     try {
-      // Token ki jagah user ka ID nikal rahe hain
       const user = thunkAPI.getState().auth.user;
+      
+      // Safety check: Agar user null hai toh yahin rok do
+      if (!user || !user.$id) {
+        return thunkAPI.rejectWithValue("User not authenticated. Please login again.");
+      }
+
       return await fileService.getFolders(user.$id);
     } catch (error) {
-      const message = error.response?.data?.message || error.message || error.toString();
+      const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
     }
   }
@@ -28,12 +33,17 @@ export const createNewFolder = createAsyncThunk(
   'files/createFolder',
   async (folderData, thunkAPI) => {
     try {
-      // Naya folder banate waqt current user ka ID sath bhejenge
       const user = thunkAPI.getState().auth.user;
+      
+      // Safety check yahan bhi lagao
+      if (!user || !user.$id) {
+        return thunkAPI.rejectWithValue("User not authenticated. Please login again.");
+      }
+
       const dataWithUser = { ...folderData, userId: user.$id };
       return await fileService.createFolder(dataWithUser);
     } catch (error) {
-      const message = error.response?.data?.message || error.message || error.toString();
+      const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
     }
   }
