@@ -23,21 +23,29 @@ function SectionView({ sectionName }) {
   const [isProcessingLink, setIsProcessingLink] = useState(false);
   const [difficulty, setDifficulty] = useState('');
 
+  // Reset folder state when the section changes
   useEffect(() => {
-    dispatch(fetchFolders({ section: sectionName, parentId: currentFolder?._id }));
-    dispatch(fetchFiles({ section: sectionName, folderId: currentFolder?._id }));
-    // Reset specific states
+    setCurrentFolder(null);
+    setFolderHistory([]);
     setDifficulty('');
+  }, [sectionName]);
+
+  useEffect(() => {
+    // Appwrite me id $id hoti hai
+    dispatch(fetchFolders({ section: sectionName, parentId: currentFolder?.$id }));
+    dispatch(fetchFiles({ section: sectionName, folderId: currentFolder?.$id }));
   }, [dispatch, sectionName, currentFolder]);
 
   const handleCreateFolder = () => {
-    const name = window.prompt('Enter folder name:');
-    if (name) {
+    const name = window.prompt('Enter folder name:'); 
+    if (name && name.trim() !== '') {
       dispatch(createNewFolder({
-        name,
+        name: name.trim(),
         section: sectionName,
-        parent: currentFolder?._id || null
-      }));
+        parent: currentFolder?.$id || null // _id ki jagah $id
+      })).unwrap()
+        .then(() => toast.success('Folder created successfully'))
+        .catch((err) => toast.error(err || 'Failed to create folder'));
     }
   };
 
@@ -48,13 +56,20 @@ function SectionView({ sectionName }) {
       formData.append('file', file);
       formData.append('section', sectionName);
       if (currentFolder) {
-        formData.append('folder', currentFolder._id);
+        formData.append('folder', currentFolder.$id); // _id ki jagah $id
       }
       if (sectionName === 'Question Banks' && difficulty) {
         formData.append('difficulty', difficulty);
       }
-      dispatch(uploadNewFile(formData));
+      
+      const uploadPromise = dispatch(uploadNewFile(formData)).unwrap();
+      toast.promise(uploadPromise, {
+        loading: 'Uploading file...',
+        success: 'File uploaded successfully',
+        error: 'Error uploading file'
+      });
     }
+    e.target.value = null; 
   };
 
   const handleAddLink = async (e) => {
@@ -63,23 +78,24 @@ function SectionView({ sectionName }) {
     
     setIsProcessingLink(true);
     try {
-      // Fetch metadata from backend
-      const metadata = await fileService.fetchMetadata(linkUrl, user.token);
+      // Token hata diya gaya hai kyunki Appwrite khud session handle karta hai
+      const metadata = await fileService.fetchMetadata(linkUrl);
       
       const linkData = {
         name: metadata.title || 'Unknown Video',
         fileUrl: linkUrl,
         section: sectionName,
-        folder: currentFolder?._id || null,
+        folder: currentFolder?.$id || null, // _id ki jagah $id
         thumbnail: metadata.thumbnail || '',
-        mimeType: 'video/link' // Custom identifier
+        mimeType: 'video/link' 
       };
       
-      dispatch(uploadNewLink(linkData));
+      await dispatch(uploadNewLink(linkData)).unwrap();
+      toast.success('Link added successfully');
       setShowLinkModal(false);
       setLinkUrl('');
     } catch (error) {
-      alert('Failed to process link. Ensure it is a valid YouTube URL.');
+      toast.error('Failed to process link. Ensure it is a valid YouTube URL.');
     } finally {
       setIsProcessingLink(false);
     }
@@ -202,7 +218,7 @@ function SectionView({ sectionName }) {
               <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wider">Folders</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {folders.map(folder => (
-                  <FolderItem key={folder._id} folder={folder} onClick={navigateToFolder} />
+                  <FolderItem key={folder.$id} folder={folder} onClick={navigateToFolder} /> 
                 ))}
               </div>
             </div>
@@ -214,7 +230,7 @@ function SectionView({ sectionName }) {
               <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wider">Files & Links</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {files.map(file => (
-                  <FileItem key={file._id} file={file} />
+                  <FileItem key={file.$id} file={file} />
                 ))}
               </div>
             </div>
@@ -239,7 +255,7 @@ function SectionView({ sectionName }) {
         <ShareModal
           shareType="section"
           section={sectionName}
-          token={user?.token}
+          // token hata diya hai
           onClose={() => setShowShareSection(false)}
         />
       )}

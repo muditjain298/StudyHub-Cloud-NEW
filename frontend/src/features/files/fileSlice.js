@@ -12,10 +12,11 @@ const initialState = {
 
 export const fetchFolders = createAsyncThunk(
   'files/fetchFolders',
-  async ({ section, parentId }, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await fileService.getFolders(section, parentId, token);
+      // Token ki jagah user ka ID nikal rahe hain
+      const user = thunkAPI.getState().auth.user;
+      return await fileService.getFolders(user.$id);
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -27,8 +28,10 @@ export const createNewFolder = createAsyncThunk(
   'files/createFolder',
   async (folderData, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await fileService.createFolder(folderData, token);
+      // Naya folder banate waqt current user ka ID sath bhejenge
+      const user = thunkAPI.getState().auth.user;
+      const dataWithUser = { ...folderData, userId: user.$id };
+      return await fileService.createFolder(dataWithUser);
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -40,8 +43,8 @@ export const removeFolder = createAsyncThunk(
   'files/deleteFolder',
   async (id, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await fileService.deleteFolder(id, token);
+      await fileService.deleteFolder(id);
+      return id; // Sirf id return kar rahe hain taaki state update ho sake
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -53,8 +56,7 @@ export const fetchFiles = createAsyncThunk(
   'files/fetchFiles',
   async ({ section, folderId }, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await fileService.getFiles(section, folderId, token);
+      return await fileService.getFiles(folderId);
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -66,8 +68,7 @@ export const uploadNewFile = createAsyncThunk(
   'files/uploadFile',
   async (formData, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await fileService.uploadFile(formData, token);
+      return await fileService.uploadFile(formData);
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -79,8 +80,7 @@ export const uploadNewLink = createAsyncThunk(
   'files/uploadLink',
   async (linkData, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await fileService.uploadLink(linkData, token);
+      return await fileService.uploadLink(linkData);
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -92,8 +92,8 @@ export const removeFile = createAsyncThunk(
   'files/deleteFile',
   async (id, thunkAPI) => {
     try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await fileService.deleteFile(id, token);
+      await fileService.deleteFile(id);
+      return id;
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -105,7 +105,7 @@ export const fileSlice = createSlice({
   name: 'file',
   initialState,
   reducers: {
-    resetFilesState: (state) => initialState,
+    resetFilesState: () => initialState,
   },
   extraReducers: (builder) => {
     builder
@@ -126,7 +126,8 @@ export const fileSlice = createSlice({
         state.folders.unshift(action.payload);
       })
       .addCase(removeFolder.fulfilled, (state, action) => {
-        state.folders = state.folders.filter((folder) => folder._id !== action.payload.id);
+        // Appwrite ki id '$id' hoti hai isliye '_id' ko replace kar diya
+        state.folders = state.folders.filter((folder) => folder.$id !== action.payload);
       })
       .addCase(fetchFiles.pending, (state) => {
         state.isLoading = true;
@@ -142,13 +143,13 @@ export const fileSlice = createSlice({
         state.message = action.payload;
       })
       .addCase(uploadNewFile.fulfilled, (state, action) => {
-        state.files.unshift(action.payload);
+        if (action.payload) state.files.unshift(action.payload);
       })
       .addCase(uploadNewLink.fulfilled, (state, action) => {
-        state.files.unshift(action.payload);
+        if (action.payload) state.files.unshift(action.payload);
       })
       .addCase(removeFile.fulfilled, (state, action) => {
-        state.files = state.files.filter((file) => file._id !== action.payload.id);
+        state.files = state.files.filter((file) => file.$id !== action.payload);
       });
   },
 });

@@ -1,16 +1,32 @@
-import { Outlet, Navigate, Link } from 'react-router-dom';
+import { Outlet, Navigate, Link, useNavigate } from 'react-router-dom'; // useNavigate add kiya
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../features/auth/authSlice';
 import { Book, Video, FileText, BarChart2, Presentation, LogOut, Settings } from 'lucide-react';
+import { account } from '../lib/appwrite'; // Appwrite account import kiya
 
 function Layout() {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // Hook initialize kiya
 
-  const onLogout = () => {
-    dispatch(logout());
-    dispatch(reset());
+  // onLogout ko async function banaya
+  const onLogout = async () => {
+    try {
+      // 1. Appwrite se current session delete karo
+      await account.deleteSession('current');
+      
+      // 2. Redux state clear karo
+      dispatch(logout());
+      dispatch(reset());
+      
+      // 3. Wapas Login page par bhej do
+      navigate('/login');
+    } catch (error) {
+      console.error("Logout mein error aaya:", error);
+    }
   };
+
+  // ... baaki ka poora return statement waisa hi rahega jaisa tumne bheja hai
 
   // LOOP WALA CODE HATA DIYA HAI (if (!user) return <Navigate... />)
 
