@@ -9,10 +9,13 @@ import ResetPassword from './pages/ResetPassword';
 import SharedView from './pages/SharedView';
 import { useEffect, useState } from 'react';
 import { account } from './lib/appwrite'; 
+import { useDispatch } from 'react-redux'; // <-- Redux dispatch import kiya
+import { setUser } from './store/authSlice';   // <-- Apne authSlice ka setUser action import karein (agar naam alag ho toh check kar lena)
 
 function App() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const dispatch = useDispatch(); // <-- Dispatch hook
 
   useEffect(() => {
     const checkUserSession = async () => {
@@ -20,20 +23,22 @@ function App() {
         const currentAccount = await account.get();
         if (currentAccount) {
           setIsAuthenticated(true);
+          // 🚀 YE SABSE ZAROORI HAI: User milte hi usko Redux store mein save kar do!
+          dispatch(setUser(currentAccount)); 
         }
       } catch (error) {
         setIsAuthenticated(false);
+        dispatch(setUser(null));
       } finally {
         setIsCheckingAuth(false);
       }
     };
     checkUserSession();
-  }, []);
+  }, [dispatch]);
 
-  // Jab tak Appwrite server se response nahi aata, tab tak sirf ye loading dikhegi (Koi redirection nahi!)
   if (isCheckingAuth) {
-  return <div className="flex h-screen items-center justify-center">Loading StudyHub...</div>;
-}
+    return <div className="flex h-screen items-center justify-center">Loading StudyHub...</div>;
+  }
 
   return (
     <>
@@ -52,13 +57,11 @@ function App() {
       />
       <Router>
         <Routes>
-          {/* Login Route: Agar authenticated hai toh Dashboard par bhejo, nahi toh Login page dikhao */}
           <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/resetpassword/:token" element={<ResetPassword />} />
           <Route path="/share/:token" element={<SharedView />} />
           
-          {/* Protected Main Layout Route */}
           <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" replace />}>
             <Route index element={<Dashboard />} />
             <Route path="notes" element={<SectionView sectionName="Notes" />} />
@@ -68,7 +71,6 @@ function App() {
             <Route path="ppts" element={<SectionView sectionName="PPTs" />} />
           </Route>
 
-          {/* Fallback for unknown URLs */}
           <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
         </Routes>
       </Router>
