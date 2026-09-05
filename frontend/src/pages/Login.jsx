@@ -38,20 +38,31 @@ function Login() {
 
   // 1. FIXED: Page load hote hi session check karega aur direct dashboard bhej dega
   useEffect(() => {
+    let isMounted = true; // Memory leak aur loop rokne ke liye
+
     const checkUserSession = async () => {
       try {
         const currentAccount = await account.get();
-        if (currentAccount) {
-          navigate('/dashboard'); // Agar pehle se logged in hai, direct bhej do
+        if (currentAccount && isMounted) {
+          navigate('/dashboard'); 
         }
       } catch (error) {
-        // User logged in nahi hai, kuch mat karo form dikhne do
+        // Yeh block wo 'Account' wala error catch karega, par hum isko 
+        // console mein print nahi karenge taaki laal rang se console na bhare.
+        // Chup-chap ignore kar do kyunki user naya hai.
       } finally {
-        setIsCheckingAuth(false);
+        if (isMounted) {
+          setIsCheckingAuth(false); // Loading screen hatayega
+        }
       }
     };
+    
     checkUserSession();
-  }, [navigate]);
+
+    return () => {
+      isMounted = false; // Cleanup function
+    };
+  }, []); // <-- YEH KHALI BRACKETS BOHOT ZAROORI HAIN! Inki wajah se hi loop rukega.
 
   // 2. FIXED: Double try-catch wala logic yahan daal diya
   const handleEmailLogin = async (e) => {
