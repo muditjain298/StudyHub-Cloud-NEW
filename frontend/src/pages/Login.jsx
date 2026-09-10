@@ -1,21 +1,18 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useState } from 'react';
 import { account } from '../lib/appwrite';
-// import { login } from '../features/auth/authSlice'; // Agar direct Appwrite use kar rahe ho toh iski zaroorat nahi
 import { BookOpen, Mail, Phone, Eye, EyeOff, Loader2 } from 'lucide-react';
-import axios from 'axios'; // Aapke code mein axios use ho raha tha par import nahi tha
+import axios from 'axios';
 
 const API = "/api/auth";
 
 function Login() {
-  const [tab, setTab] = useState('email'); 
+  const [tab, setTab] = useState('email');
   const [showForgot, setShowForgot] = useState(false);
 
   // Email/password form
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
-  const [isLoginLoading, setIsLoginLoading] = useState(false); // Naya loading state email login ke liye
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
 
   // Phone OTP form
   const [phone, setPhone] = useState('');
@@ -30,68 +27,29 @@ function Login() {
   const [forgotMessage, setForgotMessage] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
 
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  
-  // Auth Check States
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  // NOTE: No useEffect / session-check here anymore.
+  // App.jsx already decides whether to render <Login /> at all
+  // (it only renders Login when isAuthenticated is false).
+  // Checking the session again here was racing with App.jsx's own
+  // check and causing the redirect loop.
 
-  // 1. FIXED: Page load hote hi session check karega aur direct dashboard bhej dega
-  useEffect(() => {
-    let isMounted = true; // Memory leak aur loop rokne ke liye
-
-    const checkUserSession = async () => {
-      try {
-        const currentAccount = await account.get();
-        if (currentAccount && isMounted) {
-          navigate('/dashboard'); 
-        }
-      } catch (error) {
-        // Yeh block wo 'Account' wala error catch karega, par hum isko 
-        // console mein print nahi karenge taaki laal rang se console na bhare.
-        // Chup-chap ignore kar do kyunki user naya hai.
-      } finally {
-        if (isMounted) {
-          setIsCheckingAuth(false); // Loading screen hatayega
-        }
-      }
-    };
-    
-    checkUserSession();
-
-    return () => {
-      isMounted = false; // Cleanup function
-    };
-  }, []); // <-- YEH KHALI BRACKETS BOHOT ZAROORI HAIN! Inki wajah se hi loop rukega.
-
-  // 2. FIXED: Double try-catch wala logic yahan daal diya
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setIsLoginLoading(true);
 
     try {
-      // Step A: Check if session already exists
-      try {
-        const currentUser = await account.get();
-        if (currentUser) {
-          navigate('/dashboard'); 
-          return;
-        }
-      } catch (err) { /* Ignore - move to login */ }
-
-      // Step B: Create New Session
       await account.createEmailPasswordSession(formData.email, formData.password);
-      navigate('/dashboard'); // Login successful, dashboard bhej do
-
+      // Hard reload so App.jsx's auth-check runs fresh and picks up
+      // the new session correctly (instead of navigate() which would
+      // leave App.jsx's isAuthenticated state stale at `false`).
+      window.location.href = '/';
     } catch (error) {
       console.error("Login failed:", error.message);
-      alert(error.message); // User ko error dikhao
-    } finally {
+      alert(error.message);
       setIsLoginLoading(false);
     }
   };
 
-  // ... (Baaki ke functions same rahenge)
   const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!phone) return alert('Please enter your phone number');
@@ -135,26 +93,43 @@ function Login() {
     }
   };
 
-  if (isCheckingAuth) {
-    return <div className="flex h-screen items-center justify-center">Loading StudyHub...</div>;
-  }
-
-  // ... (Forgot Password UI code exactly same)
   if (showForgot) {
-    // ... aapka existing showForgot return block
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl">
+          <button onClick={() => setShowForgot(false)} className="text-indigo-600 text-sm mb-4">← Back to Login</button>
+          <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
+          {forgotMessage ? (
+            <p className="text-green-600">{forgotMessage}</p>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="Email" className="w-full p-3 rounded-xl border" />
+              <button type="submit" disabled={forgotLoading} className="w-full py-3 bg-indigo-600 text-white rounded-xl">Send Reset Link</button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
-      {/* ... aapka left panel UI same rahega ... */}
+      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-indigo-900 p-12 text-white flex-col justify-center">
+        <BookOpen className="h-12 w-12 mb-6" />
+        <h1 className="text-4xl font-bold mb-2">Welcome to StudyHub</h1>
+        <p>Your all-in-one academic resource manager.</p>
+      </div>
 
       <div className="flex flex-1 flex-col justify-center items-center px-6 py-12">
         <div className="w-full max-w-md">
-          {/* ... aapka Header / Tabs UI same rahega ... */}
+          <h2 className="text-3xl font-bold mb-6">Sign In</h2>
 
-          {/* ── EMAIL TAB ── */}
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
+            <button onClick={() => setTab('email')} className={`flex-1 py-2 rounded-lg text-sm ${tab === 'email' ? 'bg-white shadow' : ''}`}>Email</button>
+            <button onClick={() => setTab('phone')} className={`flex-1 py-2 rounded-lg text-sm ${tab === 'phone' ? 'bg-white shadow' : ''}`}>Phone OTP</button>
+          </div>
+
           {tab === 'email' && (
-            // 3. FIXED: onEmailLogin hata kar handleEmailLogin lagaya
             <form onSubmit={handleEmailLogin} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
@@ -188,7 +163,6 @@ function Login() {
                 </button>
               </div>
 
-              {/* 4. FIXED: isLoading (redux) ki jagah isLoginLoading use kiya */}
               <button type="submit" disabled={isLoginLoading}
                 className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition disabled:opacity-50">
                 {isLoginLoading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -197,7 +171,21 @@ function Login() {
             </form>
           )}
 
-          {/* ... aapka PHONE OTP TAB UI exactly same rahega ... */}
+          {tab === 'phone' && (
+            <div>
+              {!otpSent ? (
+                <form onSubmit={handleSendOtp} className="space-y-4">
+                  <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone Number" className="w-full p-3 rounded-xl border" />
+                  <button type="submit" disabled={sendingOtp} className="w-full py-3 bg-indigo-600 text-white rounded-xl">Send OTP</button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <input type="text" maxLength={6} required value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="• • • • • •" className="w-full p-3 rounded-xl border text-center tracking-widest text-xl" />
+                  <button type="submit" disabled={verifyingOtp} className="w-full py-3 bg-indigo-600 text-white rounded-xl">Verify & Sign In</button>
+                </form>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
