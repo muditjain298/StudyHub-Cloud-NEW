@@ -23,7 +23,8 @@ function App() {
         const currentAccount = await account.get();
         if (currentAccount) {
           setIsAuthenticated(true);
-          dispatch(login(currentAccount)); // Redux state bhi sync karo
+          dispatch(login(currentAccount)); 
+          console.log("User dispatched"); // Redux state bhi sync karo
         }
       } catch (error) {
         setIsAuthenticated(false);
