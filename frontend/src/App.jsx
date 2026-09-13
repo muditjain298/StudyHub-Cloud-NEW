@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -8,33 +9,32 @@ import Layout from './components/Layout';
 import SectionView from './pages/SectionView';
 import ResetPassword from './pages/ResetPassword';
 import SharedView from './pages/SharedView';
-import { useEffect, useState } from 'react';
 import { account } from './lib/appwrite';
-import { login, logout } from './features/auth/authSlice';
+import { setUser, logout } from './features/auth/authSlice';
 
 function App() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const dispatch = useDispatch();
 
-  useEffect(() => {
+    useEffect(() => {
     const checkUserSession = async () => {
       try {
         const currentAccount = await account.get();
-        if (currentAccount) {
-          setIsAuthenticated(true);
-          dispatch(login(currentAccount)); 
-          console.log("User dispatched"); // Redux state bhi sync karo
-        }
+        console.log('[App] account.get() =>', currentAccount);
+        dispatch(setUser(currentAccount));
+        setIsAuthenticated(true);
       } catch (error) {
+        console.log('[App] no session:', error?.message);
+        dispatch(clearUser());
         setIsAuthenticated(false);
-        dispatch(logout());
       } finally {
         setIsCheckingAuth(false);
       }
     };
     checkUserSession();
   }, [dispatch]);
+
 
   if (isCheckingAuth) {
     return <div className="flex h-screen items-center justify-center">Loading StudyHub...</div>;

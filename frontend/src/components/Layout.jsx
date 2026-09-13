@@ -1,34 +1,31 @@
-import { Outlet, Navigate, Link, useNavigate } from 'react-router-dom'; // useNavigate add kiya
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../features/auth/authSlice';
-import { Book, Video, FileText, BarChart2, Presentation, LogOut, Settings } from 'lucide-react';
-import { account } from '../lib/appwrite'; // Appwrite account import kiya
+import { Book, Video, FileText, BarChart2, Presentation, LogOut } from 'lucide-react';
 
 function Layout() {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // Hook initialize kiya
+  const navigate = useNavigate();
 
-  // onLogout ko async function banaya
   const onLogout = async () => {
     try {
-      // 1. Appwrite se current session delete karo
-      await account.deleteSession('current');
-      
-      // 2. Redux state clear karo
-      dispatch(logout());
+      // Redux thunk khud Appwrite session delete karta hai (authService.logout())
+      // aur localStorage bhi clear karta hai — isliye yahan alag se
+      // account.deleteSession('current') call NAHI karna, warna
+      // session do baar delete hone ki koshish hogi (401 error).
+      await dispatch(logout()).unwrap();
       dispatch(reset());
-      
-      // 3. Wapas Login page par bhej do
-      navigate('/login');
     } catch (error) {
       console.error("Logout mein error aaya:", error);
+    } finally {
+      // Hard redirect — App.jsx ka local isAuthenticated state
+      // sirf mount pe set hota hai, navigate() se update nahi hota.
+      // Full reload se App.jsx ka auth-check fresh chalega aur
+      // sahi se "logged out" state pe le jayega.
+      window.location.href = '/login';
     }
   };
-
-  // ... baaki ka poora return statement waisa hi rahega jaisa tumne bheja hai
-
-  // LOOP WALA CODE HATA DIYA HAI (if (!user) return <Navigate... />)
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
@@ -67,12 +64,10 @@ function Layout() {
             <div className="flex items-center">
               <div>
                 <div className="inline-block h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold uppercase">
-                  {/* SAFE RENDER */}
                   {user?.name?.charAt(0) || 'U'}
                 </div>
               </div>
               <div className="ml-3">
-                {/* SAFE RENDER */}
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{user?.name || 'User'}</p>
                 <button onClick={onLogout} className="text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 flex items-center mt-1">
                   <LogOut className="w-3 h-3 mr-1" /> Logout

@@ -12,19 +12,18 @@ const initialState = {
 
 export const fetchFolders = createAsyncThunk(
   'files/fetchFolders',
-  async (_, thunkAPI) => {
+  async ({ section, parentId = null } = {}, thunkAPI) => {
     try {
-      const user = thunkAPI.getState().auth.user;
-      
-      // Safety check: Agar user null hai toh yahin rok do
-      if (!user || !user.$id) {
-        return thunkAPI.rejectWithValue("User not authenticated. Please login again.");
+      let userId = thunkAPI.getState().auth.user?.$id;
+      if (!userId) {
+        const me = await account.get();       // Appwrite = single source of truth
+        thunkAPI.dispatch(setUser(me));
+        userId = me.$id;
       }
-
-      return await fileService.getFolders(user.$id);
+      return await fileService.getFolders(userId, section, parentId);
     } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
+      console.error('[fetchFolders]', error?.code, error?.type, error?.message);
+      return thunkAPI.rejectWithValue(error?.message || 'Failed to load folders');
     }
   }
 );
@@ -33,21 +32,20 @@ export const createNewFolder = createAsyncThunk(
   'files/createFolder',
   async (folderData, thunkAPI) => {
     try {
-      const user = thunkAPI.getState().auth.user;
-      
-      // Safety check yahan bhi lagao
-      if (!user || !user.$id) {
-        return thunkAPI.rejectWithValue("User not authenticated. Please login again.");
+      let userId = thunkAPI.getState().auth.user?.$id;
+      if (!userId) {
+        const me = await account.get();
+        thunkAPI.dispatch(setUser(me));
+        userId = me.$id;
       }
-
-      const dataWithUser = { ...folderData, userId: user.$id };
-      return await fileService.createFolder(dataWithUser);
+      return await fileService.createFolder({ ...folderData, userId });
     } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
+      console.error('[createNewFolder]', error?.code, error?.type, error?.message);
+      return thunkAPI.rejectWithValue(error?.message || 'Failed to create folder');
     }
   }
 );
+
 
 export const removeFolder = createAsyncThunk(
   'files/deleteFolder',

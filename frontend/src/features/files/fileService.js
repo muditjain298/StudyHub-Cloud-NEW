@@ -2,16 +2,19 @@ import { databases, appwriteConfig, ID } from '../../lib/appwrite';
 import { Query } from 'appwrite';
 
 // 1. Folders lana (Sirf current user ke)
-const getFolders = async (userId) => {
-  // Appwrite mein Query.equal se hum sirf us user ke folders filter karte hain
+const getFolders = async (userId, section, parentId = null) => {
+  const queries = [Query.equal('userId', userId)];
+  if (section) queries.push(Query.equal('section', section));
+  queries.push(parentId ? Query.equal('parent', parentId) : Query.isNull('parent'));
+
   const response = await databases.listDocuments(
     appwriteConfig.databaseId,
     appwriteConfig.folderCollectionId,
-    [Query.equal('userId', userId)] 
+    queries
   );
-  // Appwrite saara data 'documents' array ke andar bhejta hai
-  return response.documents; 
+  return response.documents;
 };
+
 
 // 2. Naya Folder Banana
 const createFolder = async (folderData) => {

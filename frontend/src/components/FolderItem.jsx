@@ -13,8 +13,11 @@ function FolderItem({ folder, onClick }) {
   const handleDelete = (e) => {
     e.stopPropagation();
     if (window.confirm('Delete this folder and all its contents?')) {
-      dispatch(removeFolder(folder._id));
-      toast.success('Folder deleted');
+      // Appwrite ki id "$id" hoti hai, "_id" nahi (wo Mongo/Mongoose convention tha)
+      dispatch(removeFolder(folder.$id))
+        .unwrap()
+        .then(() => toast.success('Folder deleted'))
+        .catch((err) => toast.error(err || 'Failed to delete folder'));
     }
   };
 
@@ -50,7 +53,7 @@ function FolderItem({ folder, onClick }) {
       {showShare && (
         <ShareModal
           shareType="folder"
-          folderId={folder._id}
+          folderId={folder.$id}
           token={user?.token}
           onClose={() => setShowShare(false)}
         />
