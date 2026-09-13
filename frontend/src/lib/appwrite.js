@@ -16,6 +16,9 @@ export const appwriteConfig = {
     folderCollectionId: import.meta.env.VITE_APPWRITE_FOLDER_COLLECTION_ID,
     notesCollectionId: import.meta.env.VITE_APPWRITE_NOTES_COLLECTION_ID,
     bucketId: import.meta.env.VITE_APPWRITE_BUCKET_ID,
+
+    // 👇 Naya add kiya
+    sharesCollectionId: import.meta.env.VITE_APPWRITE_SHARES_COLLECTION_ID,
 };
 
 export { ID };

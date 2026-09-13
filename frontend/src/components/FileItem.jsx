@@ -13,12 +13,17 @@ function FileItem({ file }) {
   const handleDelete = (e) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this file?')) {
-      dispatch(removeFile(file._id));
-      toast.success('File deleted');
+      // FIX: Appwrite documents ki ID `$id` hoti hai, `_id` nahi (MongoDB convention thi)
+      dispatch(removeFile(file.$id))
+        .unwrap()
+        .then(() => toast.success('File deleted'))
+        .catch(() => toast.error('Failed to delete file'));
     }
   };
 
-  const handleOpen = () => window.open(file.fileUrl, '_blank');
+  const handleOpen = () => {
+    if (file.fileUrl) window.open(file.fileUrl, '_blank');
+  };
 
   return (
     <>
@@ -28,13 +33,16 @@ function FileItem({ file }) {
       >
         <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
           {file.thumbnail ? (
-            <img src={file.thumbnail} alt={file.name} className="h-full w-full object-cover" />
+            <img src={file.thumbnail} alt={file.title || 'file'} className="h-full w-full object-cover" />
           ) : (
             <FileIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
+          {/* Defensive fallback: agar title missing ho (purana blank-card bug) to bhi crash na ho */}
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            {file.title || 'Untitled file'}
+          </p>
           <div className="flex items-center mt-1 space-x-2">
             {file.size > 0 && (
               <p className="text-xs text-gray-500 dark:text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -69,8 +77,8 @@ function FileItem({ file }) {
       {showShare && (
         <ShareModal
           shareType="file"
-          fileId={file._id}
-          token={user?.token}
+          fileId={file.$id}
+          userId={user?.$id}
           onClose={() => setShowShare(false)}
         />
       )}

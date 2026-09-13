@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { X, Link2, Lock, Clock, Eye, EyeOff, Copy, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { databases, appwriteConfig, ID } from '../lib/appwrite';
+// ⬆️ Path check kar lena (FileItem.jsx se import hota hai to '../lib/appwrite' sahi hoga,
+//    agar ShareModal ki location alag hai to adjust karna)
 
-function ShareModal({ shareType, section, folderId, fileId, onClose, token: userToken }) {
+// ASSUMPTION: appwriteConfig.sharesCollectionId naam ka ek naya collection Appwrite mein banana hoga
+// Fields: shareType (string), section (string), folderId (string), fileId (string),
+//         password (string, nullable), expiresAt (datetime, nullable), userId (string)
+
+function ShareModal({ shareType, section, folderId, fileId, userId, onClose }) {
   const [password, setPassword] = useState('');
   const [usePassword, setUsePassword] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -15,56 +21,63 @@ function ShareModal({ shareType, section, folderId, fileId, onClose, token: user
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const res = await axios.post(
-        'api/shares',
+      const expiresAt = expiresInHours
+        ? new Date(Date.now() + Number(expiresInHours) * 60 * 60 * 1000).toISOString()
+        : null;
+
+      const doc = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.sharesCollectionId,
+        ID.unique(),
         {
           shareType,
-          section: section || '',
+          section: section || null,
           folderId: folderId || null,
           fileId: fileId || null,
           password: usePassword && password ? password : null,
-          expiresInHours: expiresInHours || null,
-        },
-        { headers: { Authorization: `Bearer ${userToken}` } }
+          expiresAt,
+          userId: userId || null,
+        }
       );
-      setGeneratedLink(res.data.shareUrl);
+
+      const shareUrl = `${window.location.origin}/share/${doc.$id}`;
+      setGeneratedLink(shareUrl);
       toast.success('Share link generated!');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to generate link');
+      console.error(err);
+      toast.error(err.message || 'Failed to generate link');
     } finally {
       setGenerating(false);
     }
   };
 
- const handleCopy = async () => {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(generatedLink);
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = generatedLink;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-999999px";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
+  const handleCopy = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(generatedLink);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = generatedLink;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      toast.success('Link copied!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('Copy failed');
+      console.error(err);
     }
-
-    setCopied(true);
-    toast.success("Link copied!");
-    setTimeout(() => setCopied(false), 2000);
-  } catch (err) {
-    toast.error("Copy failed");
-    console.error(err);
-  }
-};
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl">
@@ -81,7 +94,6 @@ function ShareModal({ shareType, section, folderId, fileId, onClose, token: user
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Password Protection */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -112,7 +124,6 @@ function ShareModal({ shareType, section, folderId, fileId, onClose, token: user
             )}
           </div>
 
-          {/* Expiry */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-gray-500" />
@@ -131,7 +142,6 @@ function ShareModal({ shareType, section, folderId, fileId, onClose, token: user
             </select>
           </div>
 
-          {/* Generated Link */}
           {generatedLink && (
             <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4">
               <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-2">Share Link</p>
@@ -147,7 +157,6 @@ function ShareModal({ shareType, section, folderId, fileId, onClose, token: user
             </div>
           )}
 
-          {/* Generate Button */}
           <button
             onClick={handleGenerate}
             disabled={generating}

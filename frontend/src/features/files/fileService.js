@@ -1,7 +1,8 @@
-import { databases, appwriteConfig, ID } from '../../lib/appwrite';
+import { databases, storage, appwriteConfig, ID } from '../../lib/appwrite';
 import { Query } from 'appwrite';
 
-// 1. Folders lana (Sirf current user ke)
+// ---------------- FOLDERS ----------------
+
 const getFolders = async (userId, section, parentId = null) => {
   const queries = [Query.equal('userId', userId)];
   if (section) queries.push(Query.equal('section', section));
@@ -15,23 +16,21 @@ const getFolders = async (userId, section, parentId = null) => {
   return response.documents;
 };
 
-
-// 2. Naya Folder Banana
 const createFolder = async (folderData) => {
   const response = await databases.createDocument(
     appwriteConfig.databaseId,
     appwriteConfig.folderCollectionId,
-    ID.unique(), 
+    ID.unique(),
     {
       name: folderData.name,
       userId: folderData.userId,
-      section: folderData.section, // Yeh nayi line add karni hai
-      parent: folderData.parent    // Yeh nayi line add karni hai
+      section: folderData.section,
+      parent: folderData.parent,
     }
   );
   return response;
 };
-// 3. Folder Delete Karna
+
 const deleteFolder = async (folderId) => {
   const response = await databases.deleteDocument(
     appwriteConfig.databaseId,
@@ -41,26 +40,111 @@ const deleteFolder = async (folderId) => {
   return response;
 };
 
+// ---------------- FILES / NOTES ----------------
 
-// --- FILES / NOTES FUNCTIONS (Inko hum File upload wale step mein fill karenge) ---
-const getFiles = async (folderId) => {
-  return []; 
+// 1. Files lana — ab section se bhi filter hota hai (Bug C fix)
+const getFiles = async (folderId, section) => {
+  const queries = [];
+  queries.push(folderId ? Query.equal('folderId', folderId) : Query.isNull('folderId'));
+  if (section) queries.push(Query.equal('section', section));
+
+  const response = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.notesCollectionId,
+    queries
+  );
+  return response.documents;
 };
 
+// 2. Actual file upload
+// formData yaha ek REAL browser FormData object hai (SectionView.jsx se aata hai)
 const uploadFile = async (formData) => {
-  return {};
+  const file = formData.get('file');
+  const section = formData.get('section');
+  const folderId = formData.get('folder'); // SectionView 'folder' key se bhejta hai
+  const difficulty = formData.get('difficulty');
+  const userId = formData.get('userId');
+
+  if (!file) {
+    throw new Error('No file provided to uploadFile');
+  }
+
+  // Step 1: Real file ko Appwrite Storage bucket mein daalo
+  const uploadedFile = await storage.createFile(
+    appwriteConfig.bucketId,
+    ID.unique(),
+    file
+  );
+
+  // Step 2: Us file ka viewable URL banao
+  const rawUrl = storage.getFileView(appwriteConfig.bucketId, uploadedFile.$id);
+  const fileUrl = typeof rawUrl === 'string' ? rawUrl : rawUrl?.href || rawUrl?.toString();
+
+  // Step 3: Metadata "notes" collection mein save karo
+  const response = await databases.createDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.notesCollectionId,
+    ID.unique(),
+    {
+      title: file.name,
+      fileId: uploadedFile.$id,
+      folderId: folderId || null,
+      userId,
+      fileUrl,
+      section: section || null,
+      difficulty: difficulty || null,
+    }
+  );
+
+  return response;
 };
 
+// 3. External link save karna
+// linkData plain object hai: { name, fileUrl, section, folder, thumbnail, mimeType, userId }
 const uploadLink = async (linkData) => {
-  return {};
+  const response = await databases.createDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.notesCollectionId,
+    ID.unique(),
+    {
+      title: linkData.name,
+      fileId: `link-${ID.unique()}`, // real Storage file nahi hai, placeholder
+      folderId: linkData.folder || null,
+      userId: linkData.userId,
+      fileUrl: linkData.fileUrl,
+      section: linkData.section || null,
+    }
+  );
+  return response;
 };
 
+// 4. Link ka metadata (title) fetch karna
 const fetchMetadata = async (url) => {
-  return {};
+  return { title: url, thumbnail: null };
 };
 
-const deleteFile = async (fileId) => {
-  return {};
+// 5. File delete karna (Storage + Database dono se)
+const deleteFile = async (documentId) => {
+  const doc = await databases.getDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.notesCollectionId,
+    documentId
+  );
+
+  if (doc.fileId && !doc.fileId.startsWith('link-')) {
+    try {
+      await storage.deleteFile(appwriteConfig.bucketId, doc.fileId);
+    } catch (err) {
+      console.warn('Storage file already missing or failed to delete:', err);
+    }
+  }
+
+  const response = await databases.deleteDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.notesCollectionId,
+    documentId
+  );
+  return response;
 };
 
 const fileService = {
@@ -71,7 +155,7 @@ const fileService = {
   uploadFile,
   uploadLink,
   fetchMetadata,
-  deleteFile
+  deleteFile,
 };
 
 export default fileService;

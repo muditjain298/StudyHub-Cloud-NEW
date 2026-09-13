@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import fileService from './fileService';
+import { account } from '../../lib/appwrite';
+import { setUser } from '../auth/authSlice';
 
 const initialState = {
   folders: [],
@@ -10,16 +12,23 @@ const initialState = {
   message: '',
 };
 
+// Helper: Redux mein user na mile to Appwrite se fallback le aao
+// (App.jsx ka race-condition wala purana bug #3 dubara na ho, isliye har thunk khud-nirbhar hai)
+const getUserId = async (thunkAPI) => {
+  let userId = thunkAPI.getState().auth.user?.$id;
+  if (!userId) {
+    const me = await account.get();
+    thunkAPI.dispatch(setUser(me));
+    userId = me.$id;
+  }
+  return userId;
+};
+
 export const fetchFolders = createAsyncThunk(
   'files/fetchFolders',
   async ({ section, parentId = null } = {}, thunkAPI) => {
     try {
-      let userId = thunkAPI.getState().auth.user?.$id;
-      if (!userId) {
-        const me = await account.get();       // Appwrite = single source of truth
-        thunkAPI.dispatch(setUser(me));
-        userId = me.$id;
-      }
+      const userId = await getUserId(thunkAPI);
       return await fileService.getFolders(userId, section, parentId);
     } catch (error) {
       console.error('[fetchFolders]', error?.code, error?.type, error?.message);
@@ -32,12 +41,7 @@ export const createNewFolder = createAsyncThunk(
   'files/createFolder',
   async (folderData, thunkAPI) => {
     try {
-      let userId = thunkAPI.getState().auth.user?.$id;
-      if (!userId) {
-        const me = await account.get();
-        thunkAPI.dispatch(setUser(me));
-        userId = me.$id;
-      }
+      const userId = await getUserId(thunkAPI);
       return await fileService.createFolder({ ...folderData, userId });
     } catch (error) {
       console.error('[createNewFolder]', error?.code, error?.type, error?.message);
@@ -45,7 +49,6 @@ export const createNewFolder = createAsyncThunk(
     }
   }
 );
-
 
 export const removeFolder = createAsyncThunk(
   'files/deleteFolder',
@@ -76,7 +79,9 @@ export const uploadNewFile = createAsyncThunk(
   'files/uploadFile',
   async (formData, thunkAPI) => {
     try {
-      return await fileService.uploadFile(formData);
+      // Agar caller ne userId nahi bheja, to khud fetch kar lo
+      const userId = formData.userId || (await getUserId(thunkAPI));
+      return await fileService.uploadFile({ ...formData, userId });
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -88,7 +93,8 @@ export const uploadNewLink = createAsyncThunk(
   'files/uploadLink',
   async (linkData, thunkAPI) => {
     try {
-      return await fileService.uploadLink(linkData);
+      const userId = linkData.userId || (await getUserId(thunkAPI));
+      return await fileService.uploadLink({ ...linkData, userId });
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);

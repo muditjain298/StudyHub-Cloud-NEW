@@ -10,7 +10,7 @@ import SectionView from './pages/SectionView';
 import ResetPassword from './pages/ResetPassword';
 import SharedView from './pages/SharedView';
 import { account } from './lib/appwrite';
-import { setUser, logout } from './features/auth/authSlice';
+import { setUser, clearUser } from './features/auth/authSlice';
 
 function App() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
