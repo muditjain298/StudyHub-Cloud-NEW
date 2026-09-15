@@ -1,6 +1,6 @@
-import { File as FileIcon, Trash2, ExternalLink, Share2 } from 'lucide-react';
+import { File as FileIcon, Trash2, Share2, Star } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeFile } from '../features/files/fileSlice';
+import { removeFile, toggleFileStar } from '../features/files/fileSlice';
 import { useState } from 'react';
 import ShareModal from './ShareModal';
 import toast from 'react-hot-toast';
@@ -23,6 +23,13 @@ function FileItem({ file }) {
 
   const handleOpen = () => {
     if (file.fileUrl) window.open(file.fileUrl, '_blank');
+  };
+
+  const handleToggleStar = (e) => {
+    e.stopPropagation();
+    dispatch(toggleFileStar({ id: file.$id, isStarred: !file.isStarred }))
+      .unwrap()
+      .catch(() => toast.error('Failed to update bookmark'));
   };
 
   return (
@@ -63,9 +70,11 @@ function FileItem({ file }) {
             className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
             <Share2 className="h-4 w-4" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); handleOpen(); }}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-            <ExternalLink className="h-4 w-4" />
+          <button onClick={handleToggleStar}
+            aria-label={file.isStarred ? 'Remove star from file' : 'Star file'}
+            title={file.isStarred ? 'Remove star' : 'Star file'}
+            className={`p-1.5 rounded-lg transition-colors ${file.isStarred ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'}`}>
+            <Star className="h-4 w-4" fill={file.isStarred ? 'currentColor' : 'none'} />
           </button>
           <button onClick={handleDelete}
             className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">

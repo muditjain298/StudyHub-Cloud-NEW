@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { account } from '../lib/appwrite';
-import { BookOpen, Mail, Phone, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
 const API = "/api/auth";
@@ -20,7 +20,6 @@ function Login() {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
-  const [otpMessage, setOtpMessage] = useState('');
 
   // Forgot Password
   const [forgotEmail, setForgotEmail] = useState('');
@@ -55,9 +54,8 @@ function Login() {
     if (!phone) return alert('Please enter your phone number');
     setSendingOtp(true);
     try {
-      const res = await axios.post(`${API}/send-otp`, { phone });
+      await axios.post(`${API}/send-otp`, { phone });
       setOtpSent(true);
-      setOtpMessage(res.data.message);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to send OTP');
     } finally {

@@ -29,7 +29,7 @@ function SharePage() {
 
         setShareDoc(doc);
         if (!doc.password) setUnlocked(true);
-      } catch (err) {
+      } catch {
         setError('This link is invalid or no longer exists.');
       } finally {
         setLoading(false);

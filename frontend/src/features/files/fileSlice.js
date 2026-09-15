@@ -63,11 +63,23 @@ export const removeFolder = createAsyncThunk(
   }
 );
 
+export const toggleFolderStar = createAsyncThunk(
+  'files/toggleFolderStar',
+  async ({ id, isStarred }, thunkAPI) => {
+    try {
+      return await fileService.updateFolder(id, { isStarred });
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const fetchFiles = createAsyncThunk(
   'files/fetchFiles',
   async ({ section, folderId }, thunkAPI) => {
     try {
-      return await fileService.getFiles(folderId);
+      return await fileService.getFiles(folderId, section);
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -79,10 +91,19 @@ export const uploadNewFile = createAsyncThunk(
   'files/uploadFile',
   async (formData, thunkAPI) => {
     try {
-      // Agar caller ne userId nahi bheja, to khud fetch kar lo
-      const userId = formData.userId || (await getUserId(thunkAPI));
-      return await fileService.uploadFile({ ...formData, userId });
+      // BUG FIX: formData ek real FormData object hai — { ...formData } spread
+      // karne se uska .get() method chala jaata hai aur plain {} ban jaata hai.
+      // Isliye userId ko FormData mein hi append karo, spread mat karo.
+      if (!formData.get('userId')) {
+        const userId = await getUserId(thunkAPI);
+        formData.append('userId', userId);
+      }
+      return await fileService.uploadFile(formData);
     } catch (error) {
+      console.error('[uploadNewFile] Full Error:', error);
+      console.error('[uploadNewFile] Code:', error?.code);
+      console.error('[uploadNewFile] Type:', error?.type);
+      console.error('[uploadNewFile] Message:', error?.message);
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
     }
@@ -108,6 +129,18 @@ export const removeFile = createAsyncThunk(
     try {
       await fileService.deleteFile(id);
       return id;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+export const toggleFileStar = createAsyncThunk(
+  'files/toggleFileStar',
+  async ({ id, isStarred }, thunkAPI) => {
+    try {
+      return await fileService.updateFile(id, { isStarred });
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -143,6 +176,10 @@ export const fileSlice = createSlice({
         // Appwrite ki id '$id' hoti hai isliye '_id' ko replace kar diya
         state.folders = state.folders.filter((folder) => folder.$id !== action.payload);
       })
+      .addCase(toggleFolderStar.fulfilled, (state, action) => {
+        const folder = state.folders.find((item) => item.$id === action.payload.$id);
+        if (folder) folder.isStarred = action.payload.isStarred;
+      })
       .addCase(fetchFiles.pending, (state) => {
         state.isLoading = true;
       })
@@ -164,6 +201,10 @@ export const fileSlice = createSlice({
       })
       .addCase(removeFile.fulfilled, (state, action) => {
         state.files = state.files.filter((file) => file.$id !== action.payload);
+      })
+      .addCase(toggleFileStar.fulfilled, (state, action) => {
+        const file = state.files.find((item) => item.$id === action.payload.$id);
+        if (file) file.isStarred = action.payload.isStarred;
       });
   },
 });

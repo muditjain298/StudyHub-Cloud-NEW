@@ -1,12 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from './authService';
-import { account } from '../../lib/appwrite';
 
 const getStoredUser = () => {
   try {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 };

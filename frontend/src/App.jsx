@@ -59,11 +59,11 @@ function App() {
 
           <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" replace />}>
             <Route index element={<Dashboard />} />
-            <Route path="notes" element={<SectionView sectionName="Notes" />} />
-            <Route path="videos" element={<SectionView sectionName="Video Links" />} />
-            <Route path="questions" element={<SectionView sectionName="Question Banks" />} />
-            <Route path="reports" element={<SectionView sectionName="Reports" />} />
-            <Route path="ppts" element={<SectionView sectionName="PPTs" />} />
+            <Route path="notes" element={<SectionView key="notes" sectionName="Notes" />} />
+            <Route path="videos" element={<SectionView key="videos" sectionName="Video Links" />} />
+            <Route path="questions" element={<SectionView key="questions" sectionName="Question Banks" />} />
+            <Route path="reports" element={<SectionView key="reports" sectionName="Reports" />} />
+            <Route path="ppts" element={<SectionView key="ppts" sectionName="PPTs" />} />
           </Route>
 
           <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />

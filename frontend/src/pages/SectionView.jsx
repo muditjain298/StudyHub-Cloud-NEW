@@ -6,12 +6,11 @@ import FolderItem from '../components/FolderItem';
 import FileItem from '../components/FileItem';
 import ShareModal from '../components/ShareModal';
 import toast from 'react-hot-toast';
-import { FolderPlus, UploadCloud, ChevronLeft, Loader2, Link as LinkIcon, Share2 } from 'lucide-react';
+import { FolderPlus, UploadCloud, ChevronLeft, Loader2, Link as LinkIcon, Share2, Search } from 'lucide-react';
 
 function SectionView({ sectionName }) {
   const dispatch = useDispatch();
   const { folders, files, isLoading } = useSelector((state) => state.file);
-  const { user } = useSelector((state) => state.auth);
   
   const [currentFolder, setCurrentFolder] = useState(null);
   const [folderHistory, setFolderHistory] = useState([]);
@@ -22,13 +21,7 @@ function SectionView({ sectionName }) {
   const [linkUrl, setLinkUrl] = useState('');
   const [isProcessingLink, setIsProcessingLink] = useState(false);
   const [difficulty, setDifficulty] = useState('');
-
-  // Reset folder state when the section changes
-  useEffect(() => {
-    setCurrentFolder(null);
-    setFolderHistory([]);
-    setDifficulty('');
-  }, [sectionName]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     // Appwrite me id $id hoti hai
@@ -94,7 +87,7 @@ function SectionView({ sectionName }) {
       toast.success('Link added successfully');
       setShowLinkModal(false);
       setLinkUrl('');
-    } catch (error) {
+    } catch {
       toast.error('Failed to process link. Ensure it is a valid YouTube URL.');
     } finally {
       setIsProcessingLink(false);
@@ -112,6 +105,19 @@ function SectionView({ sectionName }) {
     setFolderHistory(newHistory);
     setCurrentFolder(previousFolder);
   };
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const visibleFolders = folders
+    .filter((folder) => !normalizedSearch || `${folder.name} ${folder.section}`.toLowerCase().includes(normalizedSearch))
+    .sort((first, second) => Number(second.isStarred) - Number(first.isStarred));
+  const visibleFiles = files
+    .filter((file) => !normalizedSearch || [file.title, file.section, file.difficulty, file.fileUrl]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedSearch))
+    .sort((first, second) => Number(second.isStarred) - Number(first.isStarred));
+  const hasVisibleItems = visibleFolders.length > 0 || visibleFiles.length > 0;
 
   return (
     <div>
@@ -172,6 +178,20 @@ function SectionView({ sectionName }) {
         </div>
       </div>
 
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+        <label className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search notes, links, folders..."
+            aria-label="Search notes, links, and folders"
+            className="w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm text-gray-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          />
+        </label>
+      </div>
+
       {/* Link Modal */}
       {showLinkModal && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -213,11 +233,11 @@ function SectionView({ sectionName }) {
       ) : (
         <div className="space-y-8">
           {/* Folders Section */}
-          {folders.length > 0 && (
+          {visibleFolders.length > 0 && (
             <div>
               <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wider">Folders</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {folders.map(folder => (
+                {visibleFolders.map(folder => (
                   <FolderItem key={folder.$id} folder={folder} onClick={navigateToFolder} /> 
                 ))}
               </div>
@@ -225,26 +245,30 @@ function SectionView({ sectionName }) {
           )}
 
           {/* Files Section */}
-          {files.length > 0 && (
+          {visibleFiles.length > 0 && (
             <div>
               <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wider">Files & Links</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {files.map(file => (
+                {visibleFiles.map(file => (
                   <FileItem key={file.$id} file={file} />
                 ))}
               </div>
             </div>
           )}
 
-          {folders.length === 0 && files.length === 0 && (
+          {!hasVisibleItems && (
             <div className="text-center py-20">
               {sectionName === 'Video Links' ? (
                 <LinkIcon className="mx-auto h-12 w-12 text-gray-400" />
               ) : (
                 <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
               )}
-              <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No items found</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new folder or adding an item.</p>
+              <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
+                {searchTerm ? 'No matching items' : 'No items found'}
+              </h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {searchTerm ? 'Try another search.' : 'Get started by creating a new folder or adding an item.'}
+              </p>
             </div>
           )}
         </div>

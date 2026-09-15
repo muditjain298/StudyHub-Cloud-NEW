@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../features/auth/authSlice';
 import { Book, Video, FileText, BarChart2, Presentation, LogOut } from 'lucide-react';
@@ -6,7 +6,6 @@ import { Book, Video, FileText, BarChart2, Presentation, LogOut } from 'lucide-r
 function Layout() {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const onLogout = async () => {
     try {

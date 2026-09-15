@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { BookOpen, File as FileIcon, Folder, Lock, Loader2, ExternalLink } from 'lucide-react';
@@ -12,7 +12,7 @@ function SharedView() {
   const [password, setPassword] = useState('');
   const [checking, setChecking] = useState(false);
 
-  const fetchShare = async (pwd = null) => {
+  const fetchShare = useCallback(async (pwd = null) => {
     setChecking(true);
     try {
       const res = await axios.post(`/api/shares/${token}/access`, {
@@ -32,9 +32,15 @@ function SharedView() {
       setLoading(false);
       setChecking(false);
     }
-  };
+  }, [token]);
 
-  useEffect(() => { fetchShare(); }, [token]);
+  useEffect(() => {
+    const loadShare = async () => {
+      await fetchShare();
+    };
+
+    loadShare();
+  }, [fetchShare]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">

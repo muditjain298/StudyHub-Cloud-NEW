@@ -28,7 +28,7 @@ export const logout = async () => {
   try {
     // Appwrite se session delete karne ki koshish karo
     await account.deleteSession('current');
-  } catch (error) {
+  } catch {
     // Agar Appwrite bole ki "session nahi hai", toh koi baat nahi, error ko ignore karo
     console.log("Appwrite session pehle se clear hai.");
   } finally {
@@ -41,7 +41,7 @@ export const logout = async () => {
 export const getCurrentUser = async () => {
   try {
     return await account.get();
-  } catch (error) {
+  } catch {
     return null;
   }
 };

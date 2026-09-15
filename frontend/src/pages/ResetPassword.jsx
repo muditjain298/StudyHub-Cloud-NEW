@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BookOpen, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';

@@ -1,6 +1,6 @@
-import { Folder as FolderIcon, Trash2, Share2 } from 'lucide-react';
+import { Folder as FolderIcon, Trash2, Share2, Star } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeFolder } from '../features/files/fileSlice';
+import { removeFolder, toggleFolderStar } from '../features/files/fileSlice';
 import { useState } from 'react';
 import ShareModal from './ShareModal';
 import toast from 'react-hot-toast';
@@ -19,6 +19,13 @@ function FolderItem({ folder, onClick }) {
         .then(() => toast.success('Folder deleted'))
         .catch((err) => toast.error(err || 'Failed to delete folder'));
     }
+  };
+
+  const handleToggleStar = (e) => {
+    e.stopPropagation();
+    dispatch(toggleFolderStar({ id: folder.$id, isStarred: !folder.isStarred }))
+      .unwrap()
+      .catch(() => toast.error('Failed to update star'));
   };
 
   return (
@@ -40,6 +47,14 @@ function FolderItem({ folder, onClick }) {
             className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
           >
             <Share2 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleToggleStar}
+            aria-label={folder.isStarred ? 'Remove star from folder' : 'Star folder'}
+            title={folder.isStarred ? 'Remove star' : 'Star folder'}
+            className={`p-1.5 rounded-lg transition-colors ${folder.isStarred ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'}`}
+          >
+            <Star className="h-4 w-4" fill={folder.isStarred ? 'currentColor' : 'none'} />
           </button>
           <button
             onClick={handleDelete}

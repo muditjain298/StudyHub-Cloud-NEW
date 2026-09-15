@@ -40,6 +40,15 @@ const deleteFolder = async (folderId) => {
   return response;
 };
 
+const updateFolder = async (folderId, data) => {
+  return databases.updateDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.folderCollectionId,
+    folderId,
+    data
+  );
+};
+
 // ---------------- FILES / NOTES ----------------
 
 // 1. Files lana — ab section se bhi filter hota hai (Bug C fix)
@@ -147,15 +156,26 @@ const deleteFile = async (documentId) => {
   return response;
 };
 
+const updateFile = async (documentId, data) => {
+  return databases.updateDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.notesCollectionId,
+    documentId,
+    data
+  );
+};
+
 const fileService = {
   getFolders,
   createFolder,
   deleteFolder,
+  updateFolder,
   getFiles,
   uploadFile,
   uploadLink,
   fetchMetadata,
   deleteFile,
+  updateFile,
 };
 
 export default fileService;
