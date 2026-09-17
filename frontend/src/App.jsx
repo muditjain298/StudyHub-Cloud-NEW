@@ -8,7 +8,8 @@ import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout';
 import SectionView from './pages/SectionView';
 import ResetPassword from './pages/ResetPassword';
-import SharedView from './pages/SharedView';
+
+import SharePage from './pages/SharePage';
 import { account } from './lib/appwrite';
 import { setUser, clearUser } from './features/auth/authSlice';
 
@@ -55,7 +56,7 @@ function App() {
           <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/resetpassword/:token" element={<ResetPassword />} />
-          <Route path="/share/:token" element={<SharedView />} />
+          <Route path="/share/:shareId" element={<SharePage />} />
 
           <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" replace />}>
             <Route index element={<Dashboard />} />

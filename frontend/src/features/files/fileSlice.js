@@ -91,19 +91,14 @@ export const uploadNewFile = createAsyncThunk(
   'files/uploadFile',
   async (formData, thunkAPI) => {
     try {
-      // BUG FIX: formData ek real FormData object hai — { ...formData } spread
-      // karne se uska .get() method chala jaata hai aur plain {} ban jaata hai.
-      // Isliye userId ko FormData mein hi append karo, spread mat karo.
-      if (!formData.get('userId')) {
-        const userId = await getUserId(thunkAPI);
+      let userId = formData.get('userId');
+      if (!userId) {
+        userId = await getUserId(thunkAPI);
         formData.append('userId', userId);
       }
       return await fileService.uploadFile(formData);
     } catch (error) {
-      console.error('[uploadNewFile] Full Error:', error);
-      console.error('[uploadNewFile] Code:', error?.code);
-      console.error('[uploadNewFile] Type:', error?.type);
-      console.error('[uploadNewFile] Message:', error?.message);
+      console.error('[uploadNewFile]', error?.code, error?.type, error?.message, error);
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
     }
