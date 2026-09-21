@@ -1,25 +1,20 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { account } from '../lib/appwrite';
-import { BookOpen, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { BookOpen, Check, Eye, EyeOff, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
 const API = "/api/auth";
 
 function Login() {
-  const [tab, setTab] = useState('email');
+  const navigate = useNavigate();
   const [showForgot, setShowForgot] = useState(false);
 
   // Email/password form
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
-
-  // Phone OTP form
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   // Forgot Password
   const [forgotEmail, setForgotEmail] = useState('');
@@ -32,49 +27,32 @@ function Login() {
   // Checking the session again here was racing with App.jsx's own
   // check and causing the redirect loop.
 
-  const handleEmailLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginError('');
     setIsLoginLoading(true);
 
     try {
+      try {
+        await account.deleteSession('current');
+      } catch {
+        // No active session to clear.
+      }
+
       await account.createEmailPasswordSession(formData.email, formData.password);
-      // Hard reload so App.jsx's auth-check runs fresh and picks up
-      // the new session correctly (instead of navigate() which would
-      // leave App.jsx's isAuthenticated state stale at `false`).
-      window.location.href = '/';
+      await account.get();
+      navigate('/');
     } catch (error) {
-      console.error("Login failed:", error.message);
-      alert(error.message);
+      setLoginError(error.message || 'Login failed');
+    } finally {
       setIsLoginLoading(false);
     }
   };
 
-  const handleSendOtp = async (e) => {
-    e.preventDefault();
-    if (!phone) return alert('Please enter your phone number');
-    setSendingOtp(true);
-    try {
-      await axios.post(`${API}/send-otp`, { phone });
-      setOtpSent(true);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to send OTP');
-    } finally {
-      setSendingOtp(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    setVerifyingOtp(true);
-    try {
-      const res = await axios.post(`${API}/verify-otp`, { phone, otp });
-      localStorage.setItem('user', JSON.stringify(res.data));
-      window.location.href = '/';
-    } catch (err) {
-      alert(err.response?.data?.message || 'Invalid OTP');
-    } finally {
-      setVerifyingOtp(false);
-    }
+  const handleOAuthLogin = (provider) => {
+    const successUrl = `${window.location.origin}/`;
+    const failureUrl = `${window.location.origin}/login`;
+    account.createOAuth2Session(provider, successUrl, failureUrl);
   };
 
   const handleForgotPassword = async (e) => {
@@ -93,16 +71,17 @@ function Login() {
 
   if (showForgot) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl">
-          <button onClick={() => setShowForgot(false)} className="text-indigo-600 text-sm mb-4">← Back to Login</button>
-          <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
+      <div className="auth-page flex min-h-screen items-center justify-center px-6 py-10">
+        <div className="auth-card w-full max-w-md p-8">
+          <button onClick={() => setShowForgot(false)} className="auth-back mb-8">← Back to Login</button>
+          <h2 className="auth-title mb-2">Forgot password?</h2>
+          <p className="auth-subtitle mb-7">We&apos;ll send a reset link to your email.</p>
           {forgotMessage ? (
-            <p className="text-green-600">{forgotMessage}</p>
+            <p className="auth-success">{forgotMessage}</p>
           ) : (
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="Email" className="w-full p-3 rounded-xl border" />
-              <button type="submit" disabled={forgotLoading} className="w-full py-3 bg-indigo-600 text-white rounded-xl">Send Reset Link</button>
+            <form onSubmit={handleForgotPassword} className="space-y-5">
+              <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="Email ID" className="auth-input w-full" />
+              <button type="submit" disabled={forgotLoading} className="auth-submit w-full">{forgotLoading ? 'Sending...' : 'Send Reset Link'}</button>
             </form>
           )}
         </div>
@@ -111,81 +90,52 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
-      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-indigo-900 p-12 text-white flex-col justify-center">
-        <BookOpen className="h-12 w-12 mb-6" />
-        <h1 className="text-4xl font-bold mb-2">Welcome to StudyHub</h1>
-        <p>Your all-in-one academic resource manager.</p>
-      </div>
+    <div className="auth-page min-h-screen overflow-hidden px-6 py-8 lg:px-12">
+      <div className="auth-orb auth-orb-top" />
+      <div className="auth-orb auth-orb-bottom" />
 
-      <div className="flex flex-1 flex-col justify-center items-center px-6 py-12">
-        <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold mb-6">Sign In</h2>
+      <main className="auth-layout mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl items-center justify-between gap-12">
+        <section className="auth-hero hidden lg:block">
+          <div className="auth-rule" />
+          <h1>Welcome Back<span>!</span></h1>
+          <div className="auth-tagline">Skip the lag ?</div>
+        </section>
 
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
-            <button onClick={() => setTab('email')} className={`flex-1 py-2 rounded-lg text-sm ${tab === 'email' ? 'bg-white shadow' : ''}`}>Email</button>
-            <button onClick={() => setTab('phone')} className={`flex-1 py-2 rounded-lg text-sm ${tab === 'phone' ? 'bg-white shadow' : ''}`}>Phone OTP</button>
+        <section className="auth-card w-full max-w-[362px] p-7 sm:p-8">
+          <div className="mb-6">
+            <div className="auth-brand-mark"><BookOpen size={17} /></div>
+            <h2 className="auth-title">Login</h2>
+            <p className="auth-subtitle">Glad you&apos;re back!</p>
           </div>
 
-          {tab === 'email' && (
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                <input
-                  type="email" name="email" required value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <label className="auth-field">
+              <span>Email ID</span>
+              <input type="email" name="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="you@example.com" className="auth-input" />
+            </label>
+            <label className="auth-field">
+              <span>Password</span>
+              <div className="relative">
+                <input type={showPass ? 'text' : 'password'} name="password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="Enter your password" className="auth-input w-full pr-12" />
+                <button type="button" onClick={() => setShowPass(!showPass)} className="auth-icon-button" aria-label={showPass ? 'Hide password' : 'Show password'}>{showPass ? <EyeOff size={17} /> : <Eye size={17} />}</button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPass ? 'text' : 'password'} name="password" required value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="••••••••"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition pr-12"
-                  />
-                  <button type="button" onClick={() => setShowPass(!showPass)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
+            </label>
 
-              <div className="flex justify-end">
-                <button type="button" onClick={() => setShowForgot(true)}
-                  className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
-                  Forgot password?
-                </button>
-              </div>
+            <label className="auth-remember"><input type="checkbox" defaultChecked /><span><Check size={10} /></span>Remember me</label>
+            <button type="submit" disabled={isLoginLoading} className="auth-submit w-full">{isLoginLoading && <Loader2 className="animate-spin" size={16} />}Login</button>
+            {loginError && <p className="auth-error" role="alert">{loginError}</p>}
+            <button type="button" onClick={() => setShowForgot(true)} className="auth-forgot">Forgot password?</button>
+          </form>
 
-              <button type="submit" disabled={isLoginLoading}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition disabled:opacity-50">
-                {isLoginLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                Sign In
-              </button>
-            </form>
-          )}
-
-          {tab === 'phone' && (
-            <div>
-              {!otpSent ? (
-                <form onSubmit={handleSendOtp} className="space-y-4">
-                  <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone Number" className="w-full p-3 rounded-xl border" />
-                  <button type="submit" disabled={sendingOtp} className="w-full py-3 bg-indigo-600 text-white rounded-xl">Send OTP</button>
-                </form>
-              ) : (
-                <form onSubmit={handleVerifyOtp} className="space-y-4">
-                  <input type="text" maxLength={6} required value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="• • • • • •" className="w-full p-3 rounded-xl border text-center tracking-widest text-xl" />
-                  <button type="submit" disabled={verifyingOtp} className="w-full py-3 bg-indigo-600 text-white rounded-xl">Verify & Sign In</button>
-                </form>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+          <div className="auth-divider"><span>Or</span></div>
+          <div className="auth-socials">
+            <button type="button" onClick={() => handleOAuthLogin('google')} aria-label="Continue with Google" className="social-google"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.23c0-.71-.06-1.4-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.7 2.91-4.2 2.91-7.22Z"/><path fill="#34A853" d="M12 21.5c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.5Z"/><path fill="#FBBC05" d="M6.54 13.6a5.86 5.86 0 0 1 0-3.2V7.87H3.3a9.75 9.75 0 0 0 0 8.26l3.24-2.53Z"/><path fill="#EA4335" d="M12 6.37c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.42 14.63 2.5 12 2.5a9.74 9.74 0 0 0-8.7 5.37l3.24 2.53C7.31 8.09 9.46 6.37 12 6.37Z"/></svg><span>Google</span></button>
+            <button type="button" onClick={() => handleOAuthLogin('github')} aria-label="Continue with GitHub" className="social-github"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.2a9.8 9.8 0 0 0-3.1 19.1c.49.09.67-.21.67-.47v-1.67c-2.73.59-3.3-1.16-3.3-1.16-.45-1.14-1.1-1.45-1.1-1.45-.9-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.18-.25-4.47-1.09-4.47-4.85 0-1.07.38-1.95 1.02-2.64-.1-.25-.44-1.25.1-2.6 0 0 .83-.27 2.69 1.01A9.38 9.38 0 0 1 12 7.05c.84 0 1.68.11 2.46.33 1.86-1.28 2.69-1.01 2.69-1.01.54 1.35.2 2.35.1 2.6.64.69 1.02 1.57 1.02 2.64 0 3.77-2.3 4.6-4.48 4.84.35.3.67.9.67 1.82v2.69c0 .26.18.57.68.47A9.8 9.8 0 0 0 12 2.2Z"/></svg><span>GitHub</span></button>
+          </div>
+          <p className="auth-register">Don&apos;t have an account ? <a href="/register">Signup</a></p>
+          <nav className="auth-footer"><a href="#terms">Terms &amp; Conditions</a><a href="#support">Support</a><a href="#care">Customer Care</a></nav>
+        </section>
+      </main>
     </div>
   );
 }
