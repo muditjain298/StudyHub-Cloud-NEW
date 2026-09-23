@@ -1,4 +1,42 @@
-import { account, ID } from '../../lib/appwrite';
+import { account, databases, appwriteConfig, ID } from '../../lib/appwrite';
+import { Permission, Role } from 'appwrite';
+
+const withProfile = async (user) => {
+  const prefs = user.prefs || {};
+  try {
+    const profile = await databases.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.profileCollectionId,
+      user.$id
+    );
+    return {
+      ...user,
+      ...profile,
+      profileId: profile.$id,
+      role: prefs.role || 'user',
+      isPremium: Boolean(prefs.isPremium),
+      prefs: { ...prefs, role: prefs.role || 'user', isPremium: Boolean(prefs.isPremium) },
+    };
+  } catch (error) {
+    if (error?.code !== 404) console.warn('Profile lookup failed:', error.message);
+    return { ...user, isPremium: Boolean(prefs.isPremium), role: prefs.role || 'user', prefs };
+  }
+};
+
+const ensureProfile = async (user) => {
+  try {
+    await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.profileCollectionId,
+      user.$id,
+      { name: user.name || '', email: user.email || '', isPremium: false, role: 'user', grantedBy: null, grantedAt: null },
+      [Permission.read(Role.user(user.$id))]
+    );
+  } catch (error) {
+    if (error?.code !== 409) console.warn('Profile creation failed:', error.message);
+  }
+  return withProfile(user);
+};
 
 // Register user 
 export const register = async ({ name, email, password }) => {
@@ -7,9 +45,10 @@ export const register = async ({ name, email, password }) => {
     await account.create(ID.unique(), email, password, name);
     // Auto login after register
     await account.createEmailPasswordSession(email, password);
+    await account.updatePrefs({ role: 'user', isPremium: false });
     
     // Return current user & save to localStorage
-    const user = await account.get();
+    const user = await ensureProfile(await account.get());
     localStorage.setItem('user', JSON.stringify(user)); 
     return user;
   } catch (error) {
@@ -24,7 +63,7 @@ export const login = async ({ email, password }) => {
     await account.createEmailPasswordSession(email, password);
     
     // Get user details & save to localStorage
-    const user = await account.get();
+    const user = await withProfile(await account.get());
     localStorage.setItem('user', JSON.stringify(user));
     return user;
   } catch (error) {
@@ -37,7 +76,7 @@ export const login = async ({ email, password }) => {
 export const logout = async () => {
   try {
     await account.deleteSession('current');
-  } catch (error) {
+  } catch {
     console.log("Appwrite session pehle se clear hai.");
   } finally {
     localStorage.removeItem('user');
@@ -47,8 +86,8 @@ export const logout = async () => {
 // Get current logged in user 
 export const getCurrentUser = async () => {
   try {
-    return await account.get();
-  } catch (error) {
+    return await withProfile(await account.get());
+  } catch {
     return null;
   }
 };
@@ -85,6 +124,7 @@ const authService = {
   getCurrentUser,
   createPasswordRecovery,
   confirmPasswordRecovery,
+  withProfile,
 };
 
 export default authService;

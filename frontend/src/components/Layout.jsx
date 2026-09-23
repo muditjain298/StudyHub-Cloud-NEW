@@ -1,10 +1,11 @@
 import { Outlet, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../features/auth/authSlice';
-import { Book, Video, FileText, BarChart2, Presentation, LogOut } from 'lucide-react';
+import { Book, Video, FileText, BarChart2, Presentation, LogOut, Crown, Shield } from 'lucide-react';
 
 function Layout() {
   const { user } = useSelector((state) => state.auth);
+  const isAdmin = user?.prefs?.role === 'admin';
   const dispatch = useDispatch();
 
   const onLogout = async () => {
@@ -36,6 +37,14 @@ function Layout() {
         </div>
         <div className="flex flex-1 flex-col overflow-y-auto">
           <nav className="flex-1 space-y-1 px-4 py-4">
+            <Link to="/premium" className="group flex items-center rounded-md px-2 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30">
+              <Crown className="mr-3 h-5 w-5 text-purple-500" /> {user?.prefs?.isPremium || isAdmin ? 'Premium Library' : 'Upgrade Premium'}
+            </Link>
+            {isAdmin && (
+              <Link to="/admin" className="group flex items-center rounded-md px-2 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
+                <Shield className="mr-3 h-5 w-5 text-indigo-400" /> Admin Panel
+              </Link>
+            )}
             <Link to="/notes" className="group flex items-center rounded-md px-2 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
               <Book className="mr-3 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500" />
               Notes

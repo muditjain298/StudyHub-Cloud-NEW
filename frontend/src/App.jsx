@@ -8,10 +8,15 @@ import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout';
 import SectionView from './pages/SectionView';
 import ResetPassword from './pages/ResetPassword';
+import PremiumDashboard from './pages/PremiumDashboard';
+import AdminPanel from './pages/AdminPanel';
+import PremiumRoute from './components/PremiumRoute';
+import AdminRoute from './components/AdminRoute';
 
 import SharePage from './pages/SharePage';
 import { account } from './lib/appwrite';
 import { setUser, clearUser } from './features/auth/authSlice';
+import authService from './features/auth/authService';
 
 function App() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -23,7 +28,7 @@ function App() {
       try {
         const currentAccount = await account.get();
         console.log('[App] account.get() =>', currentAccount);
-        dispatch(setUser(currentAccount));
+        dispatch(setUser(await authService.withProfile(currentAccount)));
         setIsAuthenticated(true);
       } catch (error) {
         console.log('[App] no session:', error?.message);
@@ -65,6 +70,8 @@ function App() {
             <Route path="questions" element={<SectionView key="questions" sectionName="Question Banks" />} />
             <Route path="reports" element={<SectionView key="reports" sectionName="Reports" />} />
             <Route path="ppts" element={<SectionView key="ppts" sectionName="PPTs" />} />
+            <Route path="premium" element={<PremiumRoute><PremiumDashboard /></PremiumRoute>} />
+            <Route path="admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
