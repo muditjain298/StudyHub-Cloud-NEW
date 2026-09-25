@@ -1,0 +1,9 @@
+{
+  "name": "studyhub-admin-premium",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "node-appwrite": "^29.0.0"
+  }
+}

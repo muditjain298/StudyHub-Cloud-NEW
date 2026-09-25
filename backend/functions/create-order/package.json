@@ -1,0 +1,10 @@
+{
+  "name": "studyhub-create-order",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "node-appwrite": "^29.0.0",
+    "razorpay": "^2.9.8"
+  }
+}
