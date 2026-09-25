@@ -44,7 +44,7 @@ const createShare = async (req, res) => {
     res.status(201).json({
       shareId: share._id,
       token: share.token,
-      shareUrl = `${process.env.FRONTEND_URL}/share/${shareId}`,
+      shareUrl: `${process.env.FRONTEND_URL}/share/${share.token}`,
       expiresAt: share.expiresAt,
     });
   } catch (error) {

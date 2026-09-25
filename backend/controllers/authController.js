@@ -1,8 +1,8 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const otpGenerator = require('otp-generator');
+const { createMailer } = require('../config/mailer');
 
 // In-memory OTP store (for local dev; use Redis in production)
 const otpStore = {};
@@ -177,15 +177,10 @@ const forgotPassword = async (req, res) => {
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
     await user.save({ validateBeforeSave: false });
 
-       resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+
+    const transporter = createMailer();
 
     const mailOptions = {
       from: `"StudyHub" <${process.env.EMAIL_USER}>`,
@@ -204,6 +199,7 @@ const forgotPassword = async (req, res) => {
     await transporter.sendMail(mailOptions);
     res.json({ message: 'Password reset email sent successfully!' });
   } catch (error) {
+    console.error('Email send error:', error);
     // If mail fails, clear the token so user can try again
     const user = await User.findOne({ email: req.body.email });
     if (user) {

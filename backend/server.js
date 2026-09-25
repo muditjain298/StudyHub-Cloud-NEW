@@ -4,15 +4,15 @@ const dotenv = require('dotenv');
 const path = require('path');
 const http = require('http');
 
-const { Server } = require('socket.io');
+require('dotenv').config();
 
-// railway redeploy
+const { Server } = require('socket.io');
+const cors = require('cors');
+
 const authRoutes = require('./routes/authRoutes');
 const folderRoutes = require('./routes/folderRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const shareRoutes = require('./routes/shareRoutes');
-
-dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -21,7 +21,6 @@ const io = new Server(server, {
 });
 
 // Middleware
-app.use(cors());
 app.use(cors({ origin: 'https://study-hub-cloud-new.vercel.app', credentials: true }));
 app.use(express.json());
 
@@ -58,11 +57,9 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/studyhub';
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
-    if (process.env.NODE_ENV !== 'production') {
-  server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
-}
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err);
@@ -71,4 +68,5 @@ mongoose.connect(MONGO_URI)
 app.get("/", (req, res) => {
   res.send("StudyHub Backend Running");
 });
-  module.exports = app;
+
+module.exports = app;
