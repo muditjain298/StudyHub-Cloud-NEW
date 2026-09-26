@@ -8,8 +8,11 @@ import AdminGrantPremium from '../components/AdminGrantPremium';
 function AdminPanel() {
   const { user } = useSelector((state) => state.auth);
   const [items, setItems] = useState([]); const [title, setTitle] = useState(''); const [type, setType] = useState('note'); const [file, setFile] = useState(null); const [videoUrl, setVideoUrl] = useState(''); const [loading, setLoading] = useState(false);
-  const refresh = () => premiumService.listContent().then(setItems).catch((error) => toast.error(error.message));
-  useEffect(() => { refresh(); }, []);
+  const refresh = () => premiumService.listContent(user.$id).then(setItems).catch((error) => toast.error(error.message));
+  useEffect(() => {
+    if (!user?.$id) return;
+    premiumService.listContent(user.$id).then(setItems).catch((error) => toast.error(error.message));
+  }, [user?.$id]);
   const submit = async (event) => { event.preventDefault(); setLoading(true); try { await premiumService.uploadContent({ file, title, type, videoUrl, adminId: user.$id }); setTitle(''); setFile(null); setVideoUrl(''); toast.success('Premium content published.'); refresh(); } catch (error) { toast.error(error.message || 'Upload failed.'); } finally { setLoading(false); } };
   const remove = async (item) => { if (!window.confirm(`Delete ${item.title}?`)) return; try { await premiumService.deleteContent(item); setItems((current) => current.filter((entry) => entry.$id !== item.$id)); toast.success('Content deleted.'); } catch (error) { toast.error(error.message || 'Delete failed.'); } };
   const editTitle = async (item) => { const nextTitle = window.prompt('Update title:', item.title); if (!nextTitle || nextTitle.trim() === item.title) return; try { const updated = await premiumService.updateContent(item.$id, { title: nextTitle.trim() }); setItems((current) => current.map((entry) => entry.$id === item.$id ? updated : entry)); toast.success('Content updated.'); } catch (error) { toast.error(error.message || 'Update failed.'); } };

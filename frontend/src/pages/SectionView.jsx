@@ -18,6 +18,7 @@ function SectionView({ sectionName }) {
   
   // States for Video Links / Question Banks
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [isProcessingLink, setIsProcessingLink] = useState(false);
   const [difficulty, setDifficulty] = useState('');
@@ -67,16 +68,25 @@ function SectionView({ sectionName }) {
 
   const handleAddLink = async (e) => {
     e.preventDefault();
-    if (!linkUrl) return;
+
+    if (!linkTitle.trim()) {
+      toast.error('Video title is required.');
+      return;
+    }
+
+    if (!linkUrl.trim()) {
+      toast.error('Video link is required.');
+      return;
+    }
     
     setIsProcessingLink(true);
     try {
       // Token hata diya gaya hai kyunki Appwrite khud session handle karta hai
-      const metadata = await fileService.fetchMetadata(linkUrl);
+      const metadata = await fileService.fetchMetadata(linkUrl.trim());
       
       const linkData = {
-        name: metadata.title || 'Unknown Video',
-        fileUrl: linkUrl,
+        name: linkTitle.trim(),
+        fileUrl: linkUrl.trim(),
         section: sectionName,
         folder: currentFolder?.$id || null, // _id ki jagah $id
         thumbnail: metadata.thumbnail || '',
@@ -86,6 +96,7 @@ function SectionView({ sectionName }) {
       await dispatch(uploadNewLink(linkData)).unwrap();
       toast.success('Link added successfully');
       setShowLinkModal(false);
+      setLinkTitle('');
       setLinkUrl('');
     } catch {
       toast.error('Failed to process link. Ensure it is a valid YouTube URL.');
@@ -163,7 +174,11 @@ function SectionView({ sectionName }) {
           
           {sectionName === 'Video Links' ? (
             <button 
-              onClick={() => setShowLinkModal(true)}
+              onClick={() => {
+                setLinkTitle('');
+                setLinkUrl('');
+                setShowLinkModal(true);
+              }}
               className="flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700"
             >
               <LinkIcon className="w-4 h-4 mr-2" /> Add Link
@@ -198,8 +213,17 @@ function SectionView({ sectionName }) {
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add YouTube Link</h3>
             <form onSubmit={handleAddLink}>
-              <input 
-                type="url" 
+              <input
+                type="text"
+                required
+                autoFocus
+                value={linkTitle}
+                onChange={(e) => setLinkTitle(e.target.value)}
+                placeholder="Video title"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md mb-4 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <input
+                type="url"
                 required
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
@@ -209,7 +233,11 @@ function SectionView({ sectionName }) {
               <div className="flex justify-end space-x-3">
                 <button 
                   type="button" 
-                  onClick={() => setShowLinkModal(false)}
+                  onClick={() => {
+                    setShowLinkModal(false);
+                    setLinkTitle('');
+                    setLinkUrl('');
+                  }}
                   className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
                 >
                   Cancel
