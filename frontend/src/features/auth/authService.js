@@ -18,16 +18,12 @@ const withProfile = async (user) => {
       profileId: profile.$id,
       name: profile.name || user.name || '',
       email: profile.email || user.email || '',
-      role: prefs.role || profile.role || 'user',
-      isPremium: Boolean(
-        prefs.isPremium ?? profile.isPremium
-      ),
+         role: prefs.role || profile.role || 'user',
+      isPremium: Boolean(prefs.isPremium || profile.isPremium),
       prefs: {
         ...prefs,
-        role: prefs.role || profile.role || 'user',
-        isPremium: Boolean(
-          prefs.isPremium ?? profile.isPremium
-        ),
+               role: prefs.role || profile.role || 'user',
+        isPremium: Boolean(prefs.isPremium || profile.isPremium),
       },
     };
   } catch (error) {
