@@ -14,23 +14,14 @@ const withProfile = async (user) => {
 
     return {
       ...profile,
-
-      // IMPORTANT:
-      // Appwrite Account ID ko profile row ke $id se overwrite nahi hone dena
       $id: user.$id,
-
-      // Profile row ki ID alag preserve kar rahe hain
       profileId: profile.$id,
-
-      // Account ki original information
       name: profile.name || user.name || '',
       email: profile.email || user.email || '',
-
       role: prefs.role || profile.role || 'user',
       isPremium: Boolean(
         prefs.isPremium ?? profile.isPremium
       ),
-
       prefs: {
         ...prefs,
         role: prefs.role || profile.role || 'user',
@@ -137,7 +128,7 @@ export const login = async ({
       password
     );
 
-    const user = await withProfile(
+    const user = await ensureProfile(
       await account.get()
     );
 
@@ -169,7 +160,7 @@ export const logout = async () => {
 // Get current logged in user
 export const getCurrentUser = async () => {
   try {
-    return await withProfile(
+    return await ensureProfile(
       await account.get()
     );
   } catch {
