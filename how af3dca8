@@ -1,0 +1,75 @@
+[33m36c1d74[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Add complete StudyHub documentation
+[33mc80f9cc[m Add project documentation
+[33m981b9b9[m Update README
+[33maf3dca8[m enable free mode: disable payment flow, preserve razorpay code for future
+[33m870f1af[m add root package.json for functions folder with shared support
+[33m186e248[m remove node_modules from tracking, add package.json for backend functions
+[33m83d7cd2[m Add appwrite functions
+[33m4a7baad[m Added premium Part
+[33m9e9a3ae[m Added Github and google Login section
+[33mbed9634[m Fix share page file download - use fileUrl from notes collection
+[33m7c3c950[m Fix share route to use SharePage instead of old SharedView, remove dead SharedView file
+[33m537ab6d[m Multiple changes to add bbokmark
+[33m9aabec3[m Fix file upload (blank card bug) and implement share link feature
+[33m44260f6[m Fix folder delete (use  not _id) and logout (single session-delete + hard redirect)
+[33md4f47e9[m Fix Redux auth sync - dispatch login/logout in App.jsx
+[33m1341cf8[m Fix login authentication and routes loops
+[33m6fb1a03[m Fix login redirect loop - remove duplicate session check from Login.jsx
+[33mb78df78[m fixed loading error
+[33mf6b40d7[m Fixed login 401 error and auto redirect
+[33m0d4de7c[m Fix app.jsx
+[33mded7368[m added some flies in App.jsx
+[33m3057950[m fix: added safety checks for user and user. in redux thunks
+[33mab0101e[m fix: updated Appwrite authService for robust login and logout
+[33me3459f6[m feat: integrated Appwrite backend for folder creation and updated UI
+[33md9de06c[m feat: integrated Appwrite backend for folder creation and updated UI
+[33m62b6735[m Fix: Update App.jsx auth checking state
+[33mce0c8a6[m Fix: Update login session and authentication handling
+[33m23eae5b[m Fix: Import login action in Login.jsx
+[33m601d386[m Fix: Import BookOpen and other icons in Login.jsx
+[33m796f358[m Fix: Import useDispatch and useSelector in Login.jsx
+[33m73122a7[m Fix: Import useNavigate in Login.jsx
+[33mddabb3f[m Fix: Import useNavigate in Login.jsx
+[33maf63f88[m Fix: Import useNavigate in Login.jsx
+[33m32efd4a[m Fix: Import useNavigate in Login.jsx
+[33ma43dc40[m Fix: Stable auth routing and loading guard in App.jsx
+[33mabb610d[m Fix: Removed infinite redirect loop in Layout.jsx
+[33ma9cc49d[m Fix: Corrected appwrite import paths
+[33m3f2d8c5[m Fix: Corrected appwrite import paths
+[33mfad41ca[m Fixed import path in Login
+[33m67efd8a[m Fixed App.jsx auth flow and added Navigate import
+[33mc01206e[m Fix Appwrite v26 auth syntax
+[33ma285cad[m Force Appwrite email-password endpoint
+[33m2f59613[m Fix Appwrite auth service
+[33m905bbb3[m Import ID
+[33mdf1e2f9[m Fix Vercel React Router
+[33m22c6e76[m Fix Appwrite Singapore endpoint
+[33m42937f9[m Fix Appwrite project ID exact
+[33m9fc021d[m Use Appwrite auth
+[33m2d55e84[m Set Vite framework and remove frontend vercel config
+[33m85bab04[m Fix final vercel route
+[33m8ca6102[m Fix Vercel routing
+[33m71e8c46[m Fix duplicate MongoDB connection
+[33m9e8c4c7[m Convert backend for Vercel
+[33m9187c40[m Trigger Railway redeploy
+[33m76598f5[m Fix shareRoutes syntax
+[33mc6f934b[m Fix CORS duplicate
+[33m364508f[m Fix CORS
+[33m0e9b8d4[m Fix localhost URLs for production
+[33m4e31d91[m Fix folder and file API URLs
+[33mbc59bb0[m Fix React routing on Vercel
+[33mbd861aa[m Fix auth API route
+[33m18beeb8[m  Connect frontend to Railway backend
+[33m6fc8935[m first deploy
+[33md1f6f09[m Fix clipboard copy
+[33m8656227[m Fixed files and folders API routes
+[33m3a75eb6[m Fix duplicate api path
+[33m0d06154[m Initial commit
+[33m6223ccb[m Fix frontend API URL
+[33m4ed7733[m Fix Login API
+[33m5aa3327[m Updated API URL
+[33m55490a3[m Add updateFolder export
+[33m16683e2[m Updated StudyHub
+[33m0d68ade[m Merge branch 'main' of https://github.com/muditjain298/My-Studyweb-cloud
+[33m557cef2[m Initial commit
+[33m7f9e372[m Initial commit
