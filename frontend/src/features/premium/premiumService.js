@@ -484,23 +484,41 @@ const premiumService = {
   },
 
   findUser(query) {
-    return this.execute(
-      appwriteConfig.adminFunctionId,
-      {
-        action: 'find',
-        query,
-      }
-    );
+    const trimmed = (query || '').trim();
+
+    if (!trimmed) {
+      throw new Error('Search query is required.');
+    }
+
+    if (trimmed.includes('@')) {
+      return tablesDB
+        .listRows({
+          databaseId: appwriteConfig.databaseId,
+          tableId: appwriteConfig.profileCollectionId,
+          queries: [Query.equal('email', trimmed)],
+        })
+        .then((response) => {
+          if (!response.rows.length) {
+            throw new Error('No profile found for that email.');
+          }
+          return response.rows[0];
+        });
+    }
+
+    return tablesDB.getRow({
+      databaseId: appwriteConfig.databaseId,
+      tableId: appwriteConfig.profileCollectionId,
+      rowId: trimmed,
+    });
   },
 
   setUserPremium(userId, isPremium) {
-    return this.execute(
-      appwriteConfig.adminFunctionId,
-      {
-        userId,
-        isPremium,
-      }
-    );
+    return tablesDB.updateRow({
+      databaseId: appwriteConfig.databaseId,
+      tableId: appwriteConfig.profileCollectionId,
+      rowId: userId,
+      data: { isPremium },
+    });
   },
 };
 
