@@ -1,73 +1,51 @@
-import {
-    Client,
-    Account,
-    TablesDB,
-    Storage,
-    Functions,
-    ID,
-} from 'appwrite';
+const sdk = require('node-appwrite');
 
-const client = new Client();
+const client = new sdk.Client()
+  .setEndpoint(
+    process.env.APPWRITE_ENDPOINT || 'https://sgp.cloud.appwrite.io/v1'
+  )
+  .setProject(process.env.APPWRITE_PROJECT_ID)
+  .setKey(process.env.APPWRITE_API_KEY);
 
-client
-    .setEndpoint('https://sgp.cloud.appwrite.io/v1')
-    .setProject('6a7d7d73000d5a0b6a27');
+module.exports = {
+  client,
 
-// Appwrite services
-export const account = new Account(client);
-export const tablesDB = new TablesDB(client);
-export const storage = new Storage(client);
-export const functions = new Functions(client);
+  getCaller: async (headers) => {
+    const jwt = headers['x-appwrite-user-jwt'];
 
-// Appwrite configuration
-export const appwriteConfig = {
-    databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
+    if (!jwt) {
+      throw new Error('Authenticated Appwrite session required');
+    }
 
-    // Existing environment variable names kept unchanged
-    // These values should contain Appwrite TABLE IDs.
-    folderCollectionId:
-        import.meta.env.VITE_APPWRITE_FOLDER_COLLECTION_ID,
+    const userClient = new sdk.Client()
+      .setEndpoint(
+        process.env.APPWRITE_ENDPOINT || 'https://sgp.cloud.appwrite.io/v1'
+      )
+      .setProject(process.env.APPWRITE_PROJECT_ID)
+      .setJWT(jwt);
 
-    notesCollectionId:
-        import.meta.env.VITE_APPWRITE_NOTES_COLLECTION_ID,
+    return new sdk.Account(userClient).get();
+  },
 
-    sharesCollectionId:
-        import.meta.env.VITE_APPWRITE_SHARES_COLLECTION_ID,
+  tablesDB: new sdk.TablesDB(client),
 
-    profileCollectionId:
-        import.meta.env.VITE_APPWRITE_PROFILE_COLLECTION_ID ||
-        'profiles',
+  storage: new sdk.Storage(client),
 
-    premiumContentCollectionId:
-        import.meta.env.VITE_APPWRITE_PREMIUM_CONTENT_COLLECTION_ID ||
-        'premiumContent',
+  users: new sdk.Users(client),
 
-    premiumStarsCollectionId:
-        import.meta.env.VITE_APPWRITE_PREMIUM_STARS_COLLECTION_ID ||
-        'premiumStars',
+  sdk,
 
-    paymentsCollectionId:
-        import.meta.env.VITE_APPWRITE_PAYMENTS_COLLECTION_ID ||
-        'payment',
+  ids: {
+    database: process.env.APPWRITE_DATABASE_ID,
 
-    bucketId:
-        import.meta.env.VITE_APPWRITE_BUCKET_ID,
+    profiles:
+      process.env.APPWRITE_PROFILE_COLLECTION_ID || 'profiles',
 
-    premiumBucketId:
-        import.meta.env.VITE_APPWRITE_PREMIUM_BUCKET_ID ||
-        import.meta.env.VITE_APPWRITE_BUCKET_ID,
+    content:
+      process.env.APPWRITE_PREMIUM_CONTENT_COLLECTION_ID ||
+      'premiumContent',
 
-    createOrderFunctionId:
-        import.meta.env.VITE_APPWRITE_CREATE_ORDER_FUNCTION_ID,
-
-    verifyPaymentFunctionId:
-        import.meta.env.VITE_APPWRITE_VERIFY_PAYMENT_FUNCTION_ID,
-
-    downloadFunctionId:
-        import.meta.env.VITE_APPWRITE_PREMIUM_DOWNLOAD_FUNCTION_ID,
-
-    adminFunctionId:
-        import.meta.env.VITE_APPWRITE_ADMIN_PREMIUM_FUNCTION_ID,
+    payments:
+      process.env.APPWRITE_PAYMENTS_COLLECTION_ID || 'payment',
+  },
 };
-
-export { ID };
