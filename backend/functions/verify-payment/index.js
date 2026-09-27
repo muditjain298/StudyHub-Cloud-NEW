@@ -209,6 +209,41 @@ module.exports = async ({ req, res, error }) => {
         '[VERIFY] Saving payment record'
       );
 
+      console.log(
+        '[VERIFY] Database ID:',
+        process.env.APPWRITE_DATABASE_ID
+      );
+      console.log(
+        '[VERIFY] Payment Table ID:',
+        paymentTableId
+      );
+
+      const table = await tablesDB.getTable({
+        databaseId:
+          process.env.APPWRITE_DATABASE_ID,
+        tableId: paymentTableId,
+      });
+
+      console.log(
+        '[VERIFY] TABLE FOUND:',
+        table.$id,
+        table.name
+      );
+
+      const paymentData = {
+        userId,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+        amount: payment.amount,
+        status: 'captured',
+        timestamp: new Date().toISOString(),
+      };
+
+      console.log(
+        '[VERIFY] Payment data:',
+        paymentData
+      );
+
       await tablesDB.createRow({
         databaseId:
           process.env.APPWRITE_DATABASE_ID,
@@ -219,24 +254,7 @@ module.exports = async ({ req, res, error }) => {
         rowId:
           sdk.ID.unique(),
 
-        data: {
-          userId: userId,
-
-          razorpayPaymentId:
-            razorpay_payment_id,
-
-          razorpayOrderId:
-            razorpay_order_id,
-
-          amount:
-            payment.amount,
-
-          status:
-            'captured',
-
-          timestamp:
-            new Date().toISOString(),
-        },
+        data: paymentData,
       });
 
       console.log(
