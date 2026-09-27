@@ -221,6 +221,7 @@ const authService = {
   createPasswordRecovery,
   confirmPasswordRecovery,
   withProfile,
+  ensureProfile,
 };
 
 export default authService;

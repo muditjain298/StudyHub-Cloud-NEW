@@ -28,7 +28,7 @@ function App() {
       try {
         const currentAccount = await account.get();
         console.log('[App] account.get() =>', currentAccount);
-        dispatch(setUser(await authService.withProfile(currentAccount)));
+        dispatch(setUser(await authService.ensureProfile(currentAccount)));
         setIsAuthenticated(true);
       } catch (error) {
         console.log('[App] no session:', error?.message);
