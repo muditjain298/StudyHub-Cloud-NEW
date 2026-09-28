@@ -46,7 +46,15 @@ const getRowPermissions = (userId, isAdmin = false) => {
     Permission.delete(Role.user(userId)),
   ];
 };
+const starRowId = async (userId, contentId) => {
+  const data = new TextEncoder().encode(`${userId}_${contentId}`);
+  const digest = await crypto.subtle.digest('SHA-256', data);
 
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 32);
+};
 const contentSections = {
   note: 'Notes',
   video: 'Video Links',
