@@ -26,11 +26,15 @@ function FileItem({ file }) {
   };
 
   const handleToggleStar = (e) => {
-    e.stopPropagation();
-    dispatch(toggleFileStar({ id: file.$id, isStarred: !file.isStarred }))
-      .unwrap()
-      .catch(() => toast.error('Failed to update bookmark'));
-  };
+  e.stopPropagation();
+  dispatch(toggleFileStar({ id: file.$id, isStarred: !file.isStarred }))
+    .unwrap()
+    .then((res) => console.log('Star OK:', res))
+    .catch((err) => {
+      console.error('Star FAILED:', err);
+      toast.error(String(err));
+    });
+};
 
   return (
     <>

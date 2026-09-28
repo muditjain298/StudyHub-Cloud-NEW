@@ -386,7 +386,7 @@ const premiumService = {
     contentId,
     starred
   ) {
-    const rowId = `${userId}_${contentId}`;
+    const rowId = await starRowId(userId, contentId);
 
     if (starred) {
       return tablesDB.deleteRow({
