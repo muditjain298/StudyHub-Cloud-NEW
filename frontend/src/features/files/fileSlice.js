@@ -15,13 +15,10 @@ const initialState = {
 // Helper: Redux mein user na mile to Appwrite se fallback le aao
 // (App.jsx ka race-condition wala purana bug #3 dubara na ho, isliye har thunk khud-nirbhar hai)
 const getUserId = async (thunkAPI) => {
-  let userId = thunkAPI.getState().auth.user?.$id;
-  if (!userId) {
-    const me = await account.get();
-    thunkAPI.dispatch(setUser(me));
-    userId = me.$id;
-  }
-  return userId;
+  const me = await account.get();               // asli session wala user
+  const current = thunkAPI.getState().auth.user;
+  if (current?.$id !== me.$id) thunkAPI.dispatch(setUser(me)); // Redux sync karo
+  return me.$id;
 };
 
 export const fetchFolders = createAsyncThunk(
@@ -75,6 +72,18 @@ export const toggleFolderStar = createAsyncThunk(
   }
 );
 
+export const renameFolder = createAsyncThunk(
+  'files/renameFolder',
+  async ({ id, name }, thunkAPI) => {
+    try {
+      return await fileService.updateFolder(id, { name });
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const fetchFiles = createAsyncThunk(
   'files/fetchFiles',
   async ({ section, folderId }, thunkAPI) => {
@@ -91,11 +100,8 @@ export const uploadNewFile = createAsyncThunk(
   'files/uploadFile',
   async (formData, thunkAPI) => {
     try {
-      let userId = formData.get('userId');
-      if (!userId) {
-        userId = await getUserId(thunkAPI);
-        formData.append('userId', userId);
-      }
+      const userId = await getUserId(thunkAPI);
+      formData.set('userId', userId);            // purani ID overwrite
       return await fileService.uploadFile(formData);
     } catch (error) {
       console.error('[uploadNewFile]', error?.code, error?.type, error?.message, error);
@@ -105,11 +111,12 @@ export const uploadNewFile = createAsyncThunk(
   }
 );
 
+
 export const uploadNewLink = createAsyncThunk(
   'files/uploadLink',
   async (linkData, thunkAPI) => {
     try {
-      const userId = linkData.userId || (await getUserId(thunkAPI));
+      const userId = await getUserId(thunkAPI);
       return await fileService.uploadLink({ ...linkData, userId });
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
@@ -124,6 +131,18 @@ export const removeFile = createAsyncThunk(
     try {
       await fileService.deleteFile(id);
       return id;
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+export const renameFile = createAsyncThunk(
+  'files/renameFile',
+  async ({ id, title }, thunkAPI) => {
+    try {
+      return await fileService.updateFile(id, { title });
     } catch (error) {
       const message = error.response?.data?.message || error.message || error.toString();
       return thunkAPI.rejectWithValue(message);
@@ -175,6 +194,10 @@ export const fileSlice = createSlice({
         const folder = state.folders.find((item) => item.$id === action.payload.$id);
         if (folder) folder.isStarred = action.payload.isStarred;
       })
+      .addCase(renameFolder.fulfilled, (state, action) => {
+        const folder = state.folders.find((item) => item.$id === action.payload.$id);
+        if (folder) folder.name = action.payload.name;
+      })
       .addCase(fetchFiles.pending, (state) => {
         state.isLoading = true;
       })
@@ -196,6 +219,10 @@ export const fileSlice = createSlice({
       })
       .addCase(removeFile.fulfilled, (state, action) => {
         state.files = state.files.filter((file) => file.$id !== action.payload);
+      })
+      .addCase(renameFile.fulfilled, (state, action) => {
+        const file = state.files.find((item) => item.$id === action.payload.$id);
+        if (file) file.title = action.payload.title;
       })
       .addCase(toggleFileStar.fulfilled, (state, action) => {
         const file = state.files.find((item) => item.$id === action.payload.$id);

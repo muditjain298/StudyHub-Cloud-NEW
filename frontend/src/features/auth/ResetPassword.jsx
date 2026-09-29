@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import './ResetPassword.css'; // Optional styling
@@ -13,15 +13,9 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  useEffect(() => {
-    const userId = searchParams.get('userId');
-    const secret = searchParams.get('secret');
-
-    if (!userId || !secret) {
-      setError('Invalid or expired reset link. Please request a new one.');
-    }
-  }, [searchParams]);
+  const userId = searchParams.get('userId');
+  const secret = searchParams.get('secret');
+  const hasInvalidResetLink = !userId || !secret;
 
   const handleReset = async (e) => {
     e.preventDefault();
@@ -45,9 +39,6 @@ export default function ResetPassword() {
       if (!/[0-9]/.test(newPassword)) {
         throw new Error('Password must contain at least one number');
       }
-
-      const userId = searchParams.get('userId');
-      const secret = searchParams.get('secret');
 
       if (!userId || !secret) {
         throw new Error('Invalid reset link. Please request a new one.');
@@ -83,13 +74,13 @@ export default function ResetPassword() {
     );
   }
 
-  if (error && !newPassword) {
+  if ((error || hasInvalidResetLink) && !newPassword) {
     return (
       <div className="reset-password-container">
         <div className="reset-password-card">
           <h2>Invalid Reset Link</h2>
           <div className="error-message">
-            <span>⚠️ {error}</span>
+            <span>⚠️ {error || 'Invalid or expired reset link. Please request a new one.'}</span>
           </div>
           
           <div className="actions">

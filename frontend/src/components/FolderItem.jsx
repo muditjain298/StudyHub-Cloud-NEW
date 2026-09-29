@@ -1,7 +1,7 @@
 import { Folder as FolderIcon, Trash2, Share2, Star } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeFolder, toggleFolderStar } from '../features/files/fileSlice';
-import { useState } from 'react';
+import { removeFolder, renameFolder, toggleFolderStar } from '../features/files/fileSlice';
+import { useRef, useState } from 'react';
 import ShareModal from './ShareModal';
 import toast from 'react-hot-toast';
 
@@ -9,6 +9,9 @@ function FolderItem({ folder, onClick }) {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const [showShare, setShowShare] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newName, setNewName] = useState(folder.name || '');
+  const openTimeout = useRef(null);
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -28,17 +31,69 @@ function FolderItem({ folder, onClick }) {
       .catch(() => toast.error('Failed to update star'));
   };
 
+  const handleRename = async (value = newName) => {
+    const name = value.trim();
+    setIsRenaming(false);
+
+    if (!name || name === folder.name) {
+      setNewName(folder.name || '');
+      return;
+    }
+
+    try {
+      await dispatch(renameFolder({ id: folder.$id, name })).unwrap();
+      toast.success('Folder renamed');
+    } catch (error) {
+      setNewName(folder.name || '');
+      toast.error(error || 'Failed to rename folder');
+    }
+  };
+
   return (
     <>
       <div
-        onClick={() => onClick(folder)}
+        onClick={() => {
+          window.clearTimeout(openTimeout.current);
+          openTimeout.current = window.setTimeout(() => onClick(folder), 220);
+        }}
         className="group relative flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-4 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 transition-all hover:shadow-md"
       >
         <div className="flex-shrink-0 p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
           <FolderIcon className="h-7 w-7 text-indigo-500" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{folder.name}</p>
+          {isRenaming ? (
+            <input
+              autoFocus
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              onBlur={(event) => handleRename(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') event.currentTarget.blur();
+                if (event.key === 'Escape') {
+                  event.currentTarget.value = folder.name || '';
+                  setNewName(folder.name || '');
+                  setIsRenaming(false);
+                }
+              }}
+              aria-label="Rename folder"
+              className="w-full rounded border border-indigo-400 bg-white px-1 text-sm font-medium text-gray-900 outline-none dark:bg-gray-800 dark:text-gray-100"
+            />
+          ) : (
+            <p
+              onDoubleClick={(event) => {
+                event.stopPropagation();
+                window.clearTimeout(openTimeout.current);
+                setNewName(folder.name || '');
+                setIsRenaming(true);
+              }}
+              title="Double-click to rename"
+              className="cursor-text text-sm font-medium text-gray-900 dark:text-gray-100"
+            >
+              {folder.name}
+            </p>
+          )}
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{folder.section}</p>
         </div>
         <div className="flex-shrink-0 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">

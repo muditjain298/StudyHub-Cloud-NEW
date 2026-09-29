@@ -60,7 +60,7 @@ function SectionView({ sectionName }) {
       toast.promise(uploadPromise, {
         loading: 'Uploading file...',
         success: 'File uploaded successfully',
-        error: 'Error uploading file'
+        error: (error) => error?.message || error?.toString() || 'Error uploading file'
       });
     }
     e.target.value = null; 

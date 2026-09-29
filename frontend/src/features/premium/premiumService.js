@@ -2,6 +2,7 @@ import {
   tablesDB,
   functions,
   storage,
+  account,
   appwriteConfig,
   ID,
 } from '../../lib/appwrite';
@@ -11,7 +12,6 @@ import {
   Permission,
   Role,
 } from 'appwrite';
-
 /*
  * IMPORTANT:
  * Browser/client side se sirf current logged-in user ki
@@ -320,18 +320,13 @@ const premiumService = {
       .filter((row) => row.userId === userId);
   },
 
-  async uploadContent({
-    file,
-    title,
-    type,
-    videoUrl,
-    adminId,
-  }) {
-    const section = contentSections[type];
+ async uploadContent({ file, title, type, videoUrl }) {
+  const section = contentSections[type];
+  if (!section) throw new Error('Unsupported premium content type.');
 
-    if (!section) {
-      throw new Error('Unsupported premium content type.');
-    }
+  const me = await account.get();
+  const adminId = me.$id;
+  // baaki code same, bas adminId upar wali use hogi
 
     if (type === 'video') {
       return this.uploadLink({

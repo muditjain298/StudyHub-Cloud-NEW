@@ -22,6 +22,7 @@ export const functions = new Functions(client);
 // Appwrite configuration
 export const appwriteConfig = {
     databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
+    adminUserId: import.meta.env.VITE_APPWRITE_ADMIN_USER_ID,
 
     folderCollectionId:
         import.meta.env.VITE_APPWRITE_FOLDER_COLLECTION_ID,

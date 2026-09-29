@@ -5,7 +5,7 @@ import {
   ID,
 } from '../../lib/appwrite';
 
-import { Query } from 'appwrite';
+import { Permission, Query, Role } from 'appwrite';
 
 // ---------------- FOLDERS ----------------
 
@@ -44,6 +44,11 @@ const createFolder = async (folderData) => {
     databaseId: appwriteConfig.databaseId,
     tableId: appwriteConfig.folderCollectionId,
     rowId: ID.unique(),
+    permissions: [
+      Permission.read(Role.user(folderData.userId)),
+      Permission.update(Role.user(folderData.userId)),
+      Permission.delete(Role.user(folderData.userId)),
+    ],
     data: {
       name: folderData.name,
       userId: folderData.userId,
@@ -122,12 +127,21 @@ const uploadFile = async (formData) => {
     );
   }
 
+  if (!userId) {
+    throw new Error('User ID is required to upload a file.');
+  }
+
   // Step 1: Real file ko Appwrite Storage bucket mein daalo
   const uploadedFile =
     await storage.createFile(
       appwriteConfig.bucketId,
       ID.unique(),
-      file
+      file,
+      [
+        Permission.read(Role.user(userId)),
+        Permission.update(Role.user(userId)),
+        Permission.delete(Role.user(userId)),
+      ]
     );
 
   // Step 2: Us file ka viewable URL banao
@@ -143,13 +157,18 @@ const uploadFile = async (formData) => {
         rawUrl?.toString();
 
   // Step 3: Metadata Notes table mein save karo
-  const response =
-    await tablesDB.createRow({
+  try {
+    return await tablesDB.createRow({
       databaseId:
         appwriteConfig.databaseId,
       tableId:
         appwriteConfig.notesCollectionId,
       rowId: ID.unique(),
+      permissions: [
+        Permission.read(Role.user(userId)),
+        Permission.update(Role.user(userId)),
+        Permission.delete(Role.user(userId)),
+      ],
       data: {
         title: file.name,
         fileId: uploadedFile.$id,
@@ -160,8 +179,18 @@ const uploadFile = async (formData) => {
         difficulty: difficulty || null,
       },
     });
+  } catch (error) {
+    try {
+      await storage.deleteFile(
+        appwriteConfig.bucketId,
+        uploadedFile.$id
+      );
+    } catch (cleanupError) {
+      console.warn('[uploadFile] Storage cleanup failed:', cleanupError);
+    }
 
-  return response;
+    throw error;
+  }
 };
 
 // 3. External link save karna
@@ -176,6 +205,11 @@ const uploadLink = async (
       tableId:
         appwriteConfig.notesCollectionId,
       rowId: ID.unique(),
+      permissions: [
+        Permission.read(Role.user(linkData.userId)),
+        Permission.update(Role.user(linkData.userId)),
+        Permission.delete(Role.user(linkData.userId)),
+      ],
       data: {
         title: linkData.name,
         fileId: `link-${ID.unique()}`,

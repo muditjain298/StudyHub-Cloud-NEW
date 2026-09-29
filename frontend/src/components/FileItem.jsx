@@ -1,6 +1,6 @@
 import { File as FileIcon, Trash2, Share2, Star } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeFile, toggleFileStar } from '../features/files/fileSlice';
+import { removeFile, renameFile, toggleFileStar } from '../features/files/fileSlice';
 import { useState } from 'react';
 import ShareModal from './ShareModal';
 import toast from 'react-hot-toast';
@@ -9,6 +9,8 @@ function FileItem({ file }) {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const [showShare, setShowShare] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState(file.title || '');
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -23,6 +25,24 @@ function FileItem({ file }) {
 
   const handleOpen = () => {
     if (file.fileUrl) window.open(file.fileUrl, '_blank');
+  };
+
+  const handleRename = async (value = newTitle) => {
+    const title = value.trim();
+    setIsRenaming(false);
+
+    if (!title || title === file.title) {
+      setNewTitle(file.title || '');
+      return;
+    }
+
+    try {
+      await dispatch(renameFile({ id: file.$id, title })).unwrap();
+      toast.success('File renamed');
+    } catch (error) {
+      setNewTitle(file.title || '');
+      toast.error(error || 'Failed to rename file');
+    }
   };
 
   const handleToggleStar = (e) => {
@@ -51,9 +71,38 @@ function FileItem({ file }) {
         </div>
         <div className="min-w-0 flex-1">
           {/* Defensive fallback: agar title missing ho (purana blank-card bug) to bhi crash na ho */}
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-            {file.title || 'Untitled file'}
-          </p>
+          {isRenaming ? (
+            <input
+              autoFocus
+              value={newTitle}
+              onChange={(event) => setNewTitle(event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              onBlur={(event) => handleRename(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') event.currentTarget.blur();
+                if (event.key === 'Escape') {
+                  event.currentTarget.value = file.title || '';
+                  setNewTitle(file.title || '');
+                  setIsRenaming(false);
+                }
+              }}
+              aria-label="Rename file"
+              className="w-full rounded border border-indigo-400 bg-white px-1 text-sm font-medium text-gray-900 outline-none dark:bg-gray-800 dark:text-gray-100"
+            />
+          ) : (
+            <p
+              onClick={(event) => event.stopPropagation()}
+              onDoubleClick={(event) => {
+                event.stopPropagation();
+                setNewTitle(file.title || '');
+                setIsRenaming(true);
+              }}
+              title="Double-click to rename"
+              className="cursor-text truncate text-sm font-medium text-gray-900 dark:text-gray-100"
+            >
+              {file.title || 'Untitled file'}
+            </p>
+          )}
           <div className="flex items-center mt-1 space-x-2">
             {file.size > 0 && (
               <p className="text-xs text-gray-500 dark:text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>

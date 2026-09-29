@@ -275,12 +275,16 @@ function SharePage() {
     }, [shareDoc]);
 
   useEffect(() => {
-    if (
-      unlocked &&
-      shareDoc
-    ) {
-      loadContent();
-    }
+    if (!unlocked || !shareDoc) return undefined;
+
+    let isActive = true;
+    queueMicrotask(() => {
+      if (isActive) void loadContent();
+    });
+
+    return () => {
+      isActive = false;
+    };
   }, [
     unlocked,
     shareDoc,
