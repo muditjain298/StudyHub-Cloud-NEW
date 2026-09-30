@@ -42,7 +42,7 @@ function App() {
   }, [dispatch]);
 
   if (isCheckingAuth) {
-    return <div className="flex h-screen items-center justify-center">Loading StudyHub...</div>;
+    return <div className="flex h-screen items-center justify-center">Loading notezy...</div>;
   }
 
   return (

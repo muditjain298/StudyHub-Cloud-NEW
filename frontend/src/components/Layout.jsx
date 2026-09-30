@@ -112,7 +112,7 @@ function Layout() {
       <div className="hidden w-64 flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 md:flex">
         <div className="flex h-16 shrink-0 items-center px-6 border-b border-gray-200 dark:border-gray-700">
           <Book className="h-8 w-auto text-indigo-600 dark:text-indigo-400" />
-          <span className="ml-3 text-xl font-bold text-gray-900 dark:text-white">StudyHub</span>
+          <span className="ml-3 text-xl font-bold text-gray-900 dark:text-white">notezy</span>
         </div>
         <div className="flex flex-1 flex-col overflow-y-auto">
           <nav className="flex-1 space-y-1 px-4 py-4">
@@ -143,7 +143,7 @@ function Layout() {
         <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
             <Book className="h-8 w-auto text-indigo-600 dark:text-indigo-400" />
-            <span className="ml-3 text-xl font-bold text-gray-900 dark:text-white">StudyHub</span>
+            <span className="ml-3 text-xl font-bold text-gray-900 dark:text-white">notezy</span>
           </div>
           <button onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
             <X className="h-6 w-6 text-gray-500 dark:text-gray-300" />
@@ -170,7 +170,7 @@ function Layout() {
           </button>
           <div className="flex items-center">
             <Book className="h-6 w-auto text-indigo-600 dark:text-indigo-400" />
-            <span className="ml-2 text-lg font-bold text-gray-900 dark:text-white">StudyHub</span>
+            <span className="ml-2 text-lg font-bold text-gray-900 dark:text-white">notezy</span>
           </div>
           <div className="w-6" />
         </div>

@@ -16,7 +16,7 @@ function Dashboard() {
         <Link to="/premium" className="mt-8 block overflow-hidden rounded-xl border border-purple-800/50 bg-gradient-to-r from-purple-950 to-gray-900 p-6 text-white shadow-lg transition hover:border-purple-500">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-300">StudyHub Premium</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-300">notezy Premium</p>
               <h2 className="mt-2 text-xl font-semibold">Unlock curated notes, videos, PPTs, reports, and question banks</h2>
               <p className="mt-2 text-sm text-gray-300">One-time UPI payment. Securely verified access.</p>
             </div>
