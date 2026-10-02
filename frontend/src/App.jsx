@@ -82,7 +82,7 @@ function App() {
   if (isCheckingAuth) {
     return (
       <div className="flex h-screen items-center justify-center">
-        Loading notezy...
+        Loading notezyy...
       </div>
     );
   }

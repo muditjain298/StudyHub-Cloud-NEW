@@ -142,8 +142,8 @@ function PremiumPaywall() {
         currency,
         order_id: orderId,
 
-        name: 'notezy',
-        description: 'notezy Premium Access',
+        name: 'notezyy',
+        description: 'notezyy Premium Access',
 
         prefill: {
           name: user?.name || '',
@@ -268,7 +268,7 @@ function PremiumPaywall() {
       <div className="flex items-center gap-2 text-purple-300">
         <Crown className="h-5 w-5" />
         <span className="text-xs font-bold uppercase tracking-[0.18em]">
-          notezy Premium
+          notezyy Premium
         </span>
       </div>
 
