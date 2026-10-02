@@ -100,10 +100,15 @@ function PremiumSectionView({ sectionName, onBack }) {
   }, [loadContent]);
 
   // =========================================================
-  // CREATE FOLDER
+  // CREATE FOLDER (ADMIN ONLY)
   // =========================================================
 
   const handleCreateFolder = async () => {
+    if (!isAdmin) {
+      toast.error('Only admin can create folders.');
+      return;
+    }
+
     const name = window.prompt(
       'Enter premium folder name:'
     );
@@ -132,11 +137,17 @@ function PremiumSectionView({ sectionName, onBack }) {
   };
 
   // =========================================================
-  // FILE UPLOAD
+  // FILE UPLOAD (ADMIN ONLY)
   // =========================================================
 
   const handleFileUpload = async (event) => {
     const file = event.target.files?.[0];
+
+    if (!isAdmin) {
+      event.target.value = '';
+      toast.error('Only admin can upload files.');
+      return;
+    }
 
     if (!file) return;
 
@@ -173,11 +184,16 @@ function PremiumSectionView({ sectionName, onBack }) {
   };
 
   // =========================================================
-  // ADD VIDEO LINK
+  // ADD VIDEO LINK (ADMIN ONLY)
   // =========================================================
 
   const handleAddLink = async (event) => {
     event.preventDefault();
+
+    if (!isAdmin) {
+      toast.error('Only admin can add links.');
+      return;
+    }
 
     if (!linkTitle.trim()) {
       toast.error('Video title is required.');
@@ -336,10 +352,12 @@ function PremiumSectionView({ sectionName, onBack }) {
   };
 
   // =========================================================
-  // DELETE FILE
+  // DELETE FILE (ADMIN ONLY)
   // =========================================================
 
   const handleDeleteFile = async (file) => {
+    if (!isAdmin) return;
+
     const confirmed = window.confirm(
       `Delete "${file.title}"?`
     );
@@ -357,6 +375,34 @@ function PremiumSectionView({ sectionName, onBack }) {
       toast.error(
         error?.message ||
           'Failed to delete premium file.'
+      );
+    }
+  };
+
+  // =========================================================
+  // DELETE FOLDER (ADMIN ONLY, deletes everything inside)
+  // =========================================================
+
+  const handleDeleteFolder = async (folder) => {
+    if (!isAdmin) return;
+
+    const confirmed = window.confirm(
+      `Delete folder "${folder.name}" and everything inside it? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await premiumService.deleteFolder(folder.$id, isAdmin);
+
+      toast.success('Premium folder deleted.');
+
+      await loadContent();
+    } catch (error) {
+      console.error('[deletePremiumFolder]', error);
+      toast.error(
+        error?.message ||
+          'Failed to delete premium folder.'
       );
     }
   };
@@ -446,50 +492,52 @@ function PremiumSectionView({ sectionName, onBack }) {
           </div>
         </div>
 
-        {/* ACTIONS */}
+        {/* ACTIONS (ADMIN ONLY) */}
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleCreateFolder}
-            className="flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            <FolderPlus className="mr-2 h-4 w-4" />
-            New Folder
-          </button>
-
-          {sectionName === 'Video Links' ? (
+        {isAdmin && (
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={() =>
-                setShowLinkModal(true)
-              }
-              className="flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              onClick={handleCreateFolder}
+              className="flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
             >
-              <LinkIcon className="mr-2 h-4 w-4" />
-              Add Link
+              <FolderPlus className="mr-2 h-4 w-4" />
+              New Folder
             </button>
-          ) : (
-            <label className="flex cursor-pointer items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-              {uploading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <UploadCloud className="mr-2 h-4 w-4" />
-              )}
 
-              {uploading
-                ? 'Uploading...'
-                : 'Upload File'}
+            {sectionName === 'Video Links' ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setShowLinkModal(true)
+                }
+                className="flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                <LinkIcon className="mr-2 h-4 w-4" />
+                Add Link
+              </button>
+            ) : (
+              <label className="flex cursor-pointer items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                {uploading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <UploadCloud className="mr-2 h-4 w-4" />
+                )}
 
-              <input
-                type="file"
-                className="hidden"
-                disabled={uploading}
-                onChange={handleFileUpload}
-              />
-            </label>
-          )}
-        </div>
+                {uploading
+                  ? 'Uploading...'
+                  : 'Upload File'}
+
+                <input
+                  type="file"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={handleFileUpload}
+                />
+              </label>
+            )}
+          </div>
+        )}
       </div>
 
       {/* SEARCH */}
@@ -608,6 +656,7 @@ function PremiumSectionView({ sectionName, onBack }) {
                         </div>
                         </div>
 
+                        <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={(event) => {
@@ -623,6 +672,22 @@ function PremiumSectionView({ sectionName, onBack }) {
                             fill={stars.has(folder.$id) ? 'currentColor' : 'none'}
                           />
                         </button>
+
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDeleteFolder(folder);
+                            }}
+                            aria-label="Delete folder"
+                            title="Delete folder"
+                            className="text-gray-400 hover:text-red-500"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        )}
+                        </div>
                       </div>
                     </article>
                   )
@@ -749,8 +814,9 @@ function PremiumSectionView({ sectionName, onBack }) {
                             : 'Open'}
                         </a>
 
-                        {file.userId ===
-                          user.$id && (
+                        {isAdmin &&
+                          file.userId ===
+                            user.$id && (
                           <button
                             type="button"
                             onClick={() =>
@@ -787,16 +853,18 @@ function PremiumSectionView({ sectionName, onBack }) {
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {searchTerm
                   ? 'Try another search.'
-                  : 'Create a folder or add premium content to get started.'}
+                  : isAdmin
+                    ? 'Create a folder or add premium content to get started.'
+                    : 'Premium content will appear here once it is added.'}
               </p>
             </div>
           )}
         </div>
       )}
 
-      {/* VIDEO LINK MODAL */}
+      {/* VIDEO LINK MODAL (ADMIN ONLY) */}
 
-      {showLinkModal && (
+      {isAdmin && showLinkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">

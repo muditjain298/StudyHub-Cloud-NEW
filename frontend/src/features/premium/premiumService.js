@@ -46,6 +46,16 @@ const getRowPermissions = (userId, isAdmin = false) => {
     Permission.delete(Role.user(userId)),
   ];
 };
+
+// Premium library mein folder/file/link sirf admin bana sakta hai.
+const assertAdmin = (isAdmin) => {
+  if (!isAdmin) {
+    throw new Error(
+      'Only admin can create folders or upload content in the premium library.'
+    );
+  }
+};
+
 const starRowId = async (userId, contentId) => {
   const data = new TextEncoder().encode(`${userId}_${contentId}`);
   const digest = await crypto.subtle.digest('SHA-256', data);
@@ -90,6 +100,8 @@ const premiumService = {
     parent = null,
     isAdmin = false,
   }) {
+    assertAdmin(isAdmin);
+
     if (!name?.trim()) {
       throw new Error('Folder name is required.');
     }
@@ -126,7 +138,48 @@ const premiumService = {
     });
   },
 
-  async deleteFolder(folderId) {
+  // Admin-only: folder ke andar ki saari files, subfolders
+  // aur storage files delete karke phir folder delete karta hai.
+  async deleteFolder(folderId, isAdmin = false) {
+    assertAdmin(isAdmin);
+
+    // 1. Folder ke andar ki files (storage + row)
+    while (true) {
+      const fileRes = await tablesDB.listRows({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.premiumFilesCollectionId,
+        queries: [
+          Query.equal('folderId', folderId),
+          Query.limit(100),
+        ],
+      });
+
+      if (!fileRes.rows.length) break;
+
+      for (const file of fileRes.rows) {
+        await this.deleteFile(file);
+      }
+    }
+
+    // 2. Subfolders (recursively)
+    while (true) {
+      const folderRes = await tablesDB.listRows({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.premiumFoldersCollectionId,
+        queries: [
+          Query.equal('parent', folderId),
+          Query.limit(100),
+        ],
+      });
+
+      if (!folderRes.rows.length) break;
+
+      for (const subFolder of folderRes.rows) {
+        await this.deleteFolder(subFolder.$id, isAdmin);
+      }
+    }
+
+    // 3. Folder row khud
     return tablesDB.deleteRow({
       databaseId: appwriteConfig.databaseId,
       tableId: appwriteConfig.premiumFoldersCollectionId,
@@ -162,6 +215,8 @@ const premiumService = {
     type,
     isAdmin = false,
   }) {
+    assertAdmin(isAdmin);
+
     if (!file) {
       throw new Error('No file provided.');
     }
@@ -234,6 +289,8 @@ const premiumService = {
     type = 'video',
     isAdmin = false,
   }) {
+    assertAdmin(isAdmin);
+
     if (!title?.trim()) {
       throw new Error('Title is required.');
     }
