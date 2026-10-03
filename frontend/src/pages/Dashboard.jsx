@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import StudyGuide from '../components/StudyGuide';
 
 function Dashboard() {
   const { user } = useSelector((state) => state.auth);
@@ -25,8 +26,7 @@ function Dashboard() {
         </Link>
       )}
 
-      {/* Sections Placeholder */}
-      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Link to="/notes" className="block overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800 p-6 hover:shadow-md transition-shadow">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Notes</h3>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Manage your PDF and text notes.</p>
@@ -39,7 +39,17 @@ function Dashboard() {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Question Banks</h3>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Previous year papers.</p>
         </Link>
+        <Link to="/reports" className="block overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800 p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Reports</h3>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Keep reports and academic documents organized.</p>
+        </Link>
+        <Link to="/ppts" className="block overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800 p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">PPTs</h3>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Browse presentations and slide decks.</p>
+        </Link>
       </div>
+
+      <StudyGuide />
     </div>
   );
 }

@@ -472,14 +472,14 @@ function PremiumSectionView({ sectionName, onBack }) {
             <button
               type="button"
               onClick={onBack}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:bg-gray-800 dark:text-violet-200 dark:hover:bg-gray-700"
             >
               ← Sections
             </button>
           )}
 
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-semibold text-violet-900 dark:text-violet-100">
               {sectionName}
               {currentFolder
                 ? ` > ${currentFolder.name}`
@@ -553,7 +553,7 @@ function PremiumSectionView({ sectionName, onBack }) {
               setSearchTerm(event.target.value)
             }
             placeholder="Search folders and premium files..."
-            className="w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm text-gray-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className="w-full rounded-md border border-violet-300 bg-white py-2 pl-10 pr-3 text-sm text-violet-900 shadow-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:border-violet-600 dark:bg-gray-800 dark:text-violet-100"
           />
         </label>
       </div>
@@ -629,7 +629,7 @@ function PremiumSectionView({ sectionName, onBack }) {
                                 }
                               }}
                               aria-label="Rename premium folder"
-                              className="w-full rounded border border-indigo-400 bg-white px-1 font-semibold text-gray-900 outline-none dark:bg-gray-800 dark:text-white"
+                              className="w-full rounded border border-violet-400 bg-white px-1 font-semibold text-violet-900 outline-none dark:bg-gray-800 dark:text-violet-100"
                             />
                           ) : (
                             <h3
@@ -644,7 +644,7 @@ function PremiumSectionView({ sectionName, onBack }) {
                                 setEditingFolderId(folder.$id);
                               }}
                               title={isAdmin ? 'Double-click to rename' : undefined}
-                              className={`truncate font-semibold text-gray-900 dark:text-white ${isAdmin ? 'cursor-text' : ''}`}
+                              className={`truncate font-semibold text-violet-900 dark:text-violet-100 ${isAdmin ? 'cursor-text' : ''}`}
                             >
                               {folder.name}
                             </h3>
@@ -752,7 +752,7 @@ function PremiumSectionView({ sectionName, onBack }) {
                                   }
                                 }}
                                 aria-label="Rename premium file"
-                                className="w-full rounded border border-indigo-400 bg-white px-1 font-semibold text-gray-900 outline-none dark:bg-gray-800 dark:text-white"
+                                className="w-full rounded border border-violet-400 bg-white px-1 font-semibold text-violet-900 outline-none dark:bg-gray-800 dark:text-violet-100"
                               />
                             ) : (
                               <h3
@@ -762,7 +762,7 @@ function PremiumSectionView({ sectionName, onBack }) {
                                   setEditingFileId(file.$id);
                                 }}
                                 title={isAdmin ? 'Double-click to rename' : undefined}
-                                className={`truncate font-semibold text-gray-900 dark:text-white ${isAdmin ? 'cursor-text' : ''}`}
+                                className={`truncate font-semibold text-violet-900 dark:text-violet-100 ${isAdmin ? 'cursor-text' : ''}`}
                               >
                                 {file.title}
                               </h3>
@@ -844,7 +844,7 @@ function PremiumSectionView({ sectionName, onBack }) {
             <div className="py-20 text-center">
               <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
 
-              <h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-white">
+              <h3 className="mt-3 text-sm font-semibold text-violet-900 dark:text-violet-100">
                 {searchTerm
                   ? 'No matching items'
                   : 'No premium items found'}
@@ -867,7 +867,7 @@ function PremiumSectionView({ sectionName, onBack }) {
       {isAdmin && showLinkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-violet-900 dark:text-violet-100">
               Add Premium Video Link
             </h2>
 

@@ -17,6 +17,7 @@ import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout';
 import SectionView from './pages/SectionView';
+import UsageGuide from './components/UsageGuide';
 
 import PremiumDashboard from './pages/PremiumDashboard';
 import AdminPanel from './pages/AdminPanel';
@@ -217,6 +218,11 @@ function App() {
                   sectionName="PPTs"
                 />
               }
+            />
+
+            <Route
+              path="about"
+              element={<UsageGuide />}
             />
 
             <Route

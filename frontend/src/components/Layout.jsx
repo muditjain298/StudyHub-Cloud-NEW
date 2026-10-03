@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../features/auth/authSlice';
-import { Book, Video, FileText, BarChart2, Presentation, LogOut, Crown, Shield, Menu, X } from 'lucide-react';
+import { Book, Video, FileText, BarChart2, Presentation, LogOut, Crown, Shield, Menu, X, Info } from 'lucide-react';
 
 function Layout() {
   const { user } = useSelector((state) => state.auth);
@@ -86,6 +86,14 @@ function Layout() {
       >
         <Presentation className="mr-3 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500" />
         PPTs
+      </Link>
+      <Link
+        to="/about"
+        onClick={() => setMobileMenuOpen(false)}
+        className="group flex items-center rounded-md px-2 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+      >
+        <Info className="mr-3 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500" />
+        About
       </Link>
     </>
   );

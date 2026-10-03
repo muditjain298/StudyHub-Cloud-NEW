@@ -43,6 +43,9 @@ export const appwriteConfig = {
         import.meta.env.VITE_APPWRITE_PREMIUM_CONTENT_COLLECTION_ID ||
         'premiumContent',
 
+    guideTableId:
+        import.meta.env.VITE_APPWRITE_GUIDE_TABLE_ID || 'usageGuides',
+
     premiumStarsCollectionId:
         import.meta.env.VITE_APPWRITE_PREMIUM_STARS_COLLECTION_ID ||
         'premiumStars',
