@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../features/auth/authSlice';
-import { Book, Video, FileText, BarChart2, Presentation, LogOut, Crown, Shield, Menu, X, Info } from 'lucide-react';
+import { Book, Video, FileText, BarChart2, Presentation, LogOut, Crown, Shield, Menu, X, Info, Users } from 'lucide-react';
 
 function Layout() {
   const { user } = useSelector((state) => state.auth);
@@ -45,6 +45,15 @@ function Layout() {
           className="group flex items-center rounded-md px-2 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
         >
           <Shield className="mr-3 h-5 w-5 text-indigo-400" /> Admin Panel
+        </Link>
+      )}
+      {isAdmin && (
+        <Link
+          to="/admin/access"
+          onClick={() => setMobileMenuOpen(false)}
+          className="group flex items-center rounded-md px-2 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+        >
+          <Users className="mr-3 h-5 w-5 text-emerald-400" /> Admin Access
         </Link>
       )}
       <Link

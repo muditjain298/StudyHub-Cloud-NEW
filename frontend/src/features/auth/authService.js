@@ -2,52 +2,72 @@ import { account, tablesDB, appwriteConfig, ID } from '../../lib/appwrite';
 import { Permission, Role } from 'appwrite';
 
 // --------------------------------------------------
+// Trusted sources (a user cannot edit these himself):
+//  - admin   => Appwrite account label "admin" (set in Console),
+//               or the VITE_APPWRITE_ADMIN_USER_ID account
+//  - premium => a row in the premiumAccess table whose rowId
+//               is the user id (only admin can create/delete it)
+// Account prefs are NOT trusted, any user can change their own prefs.
+// --------------------------------------------------
+
+const isAdminUser = (user) =>
+  (Array.isArray(user.labels) && user.labels.includes('admin')) ||
+  user.$id === appwriteConfig.adminUserId;
+
+const hasPremiumAccess = async (userId) => {
+  try {
+    await tablesDB.getRow({
+      databaseId: appwriteConfig.databaseId,
+      tableId: appwriteConfig.premiumAccessCollectionId,
+      rowId: userId,
+    });
+    return true;
+  } catch (error) {
+    if (error?.code !== 404) {
+      console.warn('Premium access lookup failed:', error?.message);
+    }
+    return false;
+  }
+};
+
+// --------------------------------------------------
 // Add profile information to the Appwrite user
 // --------------------------------------------------
 
 const withProfile = async (user) => {
-  const prefs = user.prefs || {};
+  let profile = null;
 
   try {
-    const profile = await tablesDB.getRow({
+    profile = await tablesDB.getRow({
       databaseId: appwriteConfig.databaseId,
       tableId: appwriteConfig.profileCollectionId,
       rowId: user.$id,
     });
-
-    return {
-      ...profile,
-      $id: user.$id,
-      profileId: profile.$id,
-      name: profile.name || user.name || '',
-      email: profile.email || user.email || '',
-      role: prefs.role || profile.role || 'user',
-      isPremium: Boolean(
-        prefs.isPremium ?? profile.isPremium
-      ),
-      prefs: {
-        ...prefs,
-        role: prefs.role || profile.role || 'user',
-        isPremium: Boolean(
-          prefs.isPremium ?? profile.isPremium
-        ),
-      },
-    };
   } catch (error) {
     if (error?.code !== 404) {
-      console.warn(
-        'Profile lookup failed:',
-        error?.message
-      );
+      console.warn('Profile lookup failed:', error?.message);
     }
-
-    return {
-      ...user,
-      role: prefs.role || 'user',
-      isPremium: Boolean(prefs.isPremium),
-      prefs,
-    };
   }
+
+  const role = isAdminUser(user) ? 'admin' : 'user';
+  const isPremium =
+    role === 'admin' ? true : await hasPremiumAccess(user.$id);
+
+  return {
+    ...user,
+    profileId: profile?.$id || null,
+    name: profile?.name || user.name || '',
+    email: profile?.email || user.email || '',
+    role,
+    isPremium,
+    // Kept so existing code that reads user.prefs.role / user.prefs.isPremium
+    // keeps working, but the values now come from the trusted sources above.
+    prefs: {
+      ...(user.prefs || {}),
+      role,
+      isPremium,
+    },
+  };
 };
 
 // --------------------------------------------------
@@ -120,11 +140,6 @@ export const register = async ({
       email,
       password
     );
-
-    await account.updatePrefs({
-      role: 'user',
-      isPremium: false,
-    });
 
     const user = await ensureProfile(
       await account.get()
@@ -208,8 +223,9 @@ export const getCurrentUser = async () => {
 
 export const createPasswordRecovery = async (email) => {
   try {
-   const recoveryUrl =
-  'https://study-hub-cloud-new-xdoh.vercel.app/resetpassword';
+    const recoveryUrl =
+      'https://study-hub-cloud-new-xdoh.vercel.app/resetpassword';
+
     console.log(
       '[Password Recovery] URL:',
       recoveryUrl

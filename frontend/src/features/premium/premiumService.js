@@ -17,10 +17,9 @@ import {
  * Browser/client side se sirf current logged-in user ki
  * permissions create ki ja rahi hain.
  *
- * Admin ko doosre users ki rows manage karne ki permission
- * client se dena Appwrite allow nahi karta.
- *
- * Admin-wide management hum server-side function se karenge.
+ * Asli security Appwrite Console ki permissions se aati hai
+ * (label:admin). Yahan ke assertAdmin checks sirf pehli line
+ * of defence hain, kyunki client code koi bhi badal sakta hai.
  */
 const getRowPermissions = (userId, isAdmin = false) => {
   if (!userId) {
@@ -377,13 +376,15 @@ const premiumService = {
       .filter((row) => row.userId === userId);
   },
 
- async uploadContent({ file, title, type, videoUrl }) {
-  const section = contentSections[type];
-  if (!section) throw new Error('Unsupported premium content type.');
+  async uploadContent({ file, title, type, videoUrl }) {
+    const section = contentSections[type];
 
-  const me = await account.get();
-  const adminId = me.$id;
-  // baaki code same, bas adminId upar wali use hogi
+    if (!section) {
+      throw new Error('Unsupported premium content type.');
+    }
+
+    const me = await account.get();
+    const adminId = me.$id;
 
     if (type === 'video') {
       return this.uploadLink({
@@ -543,42 +544,96 @@ const premiumService = {
     );
   },
 
-  findUser(query) {
+  // ---------------- PREMIUM ACCESS (admin grants / revokes) ----------------
+
+  // Premium = premiumAccess table me us user ki row (rowId = userId).
+  async isUserPremium(userId) {
+    try {
+      await tablesDB.getRow({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.premiumAccessCollectionId,
+        rowId: userId,
+      });
+      return true;
+    } catch (error) {
+      if (error?.code === 404) return false;
+      throw error;
+    }
+  },
+
+  async findUser(query) {
     const trimmed = (query || '').trim();
 
     if (!trimmed) {
       throw new Error('Search query is required.');
     }
 
+    let profile;
+
     if (trimmed.includes('@')) {
-      return tablesDB
-        .listRows({
-          databaseId: appwriteConfig.databaseId,
-          tableId: appwriteConfig.profileCollectionId,
-          queries: [Query.equal('email', trimmed)],
-        })
-        .then((response) => {
-          if (!response.rows.length) {
-            throw new Error('No profile found for that email.');
-          }
-          return response.rows[0];
-        });
+      const response = await tablesDB.listRows({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.profileCollectionId,
+        queries: [Query.equal('email', trimmed)],
+      });
+
+      if (!response.rows.length) {
+        throw new Error('No profile found for that email.');
+      }
+
+      profile = response.rows[0];
+    } else {
+      profile = await tablesDB.getRow({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.profileCollectionId,
+        rowId: trimmed,
+      });
     }
 
-    return tablesDB.getRow({
-      databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.profileCollectionId,
-      rowId: trimmed,
-    });
+    return {
+      ...profile,
+      isPremium: await this.isUserPremium(profile.$id),
+    };
   },
 
-  setUserPremium(userId, isPremium) {
-    return tablesDB.updateRow({
+  async setUserPremium(targetUserId, isPremium) {
+    const base = {
       databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.profileCollectionId,
-      rowId: userId,
-      data: { isPremium },
-    });
+      tableId: appwriteConfig.premiumAccessCollectionId,
+      rowId: targetUserId,
+    };
+
+    if (!isPremium) {
+      try {
+        await tablesDB.deleteRow(base);
+      } catch (error) {
+        if (error?.code !== 404) throw error;
+      }
+
+      return { isPremium: false };
+    }
+
+    const adminId = (await account.get()).$id;
+
+    try {
+      await tablesDB.createRow({
+        ...base,
+        data: {
+          userId: targetUserId,
+          grantedBy: adminId,
+          grantedAt: new Date().toISOString(),
+        },
+        // Client side se doosre user ki ID ko permission nahi di ja sakti.
+        // Isliye Read sabhi logged-in users ko; Create/Update/Delete
+        // table-level pe sirf label:admin ke paas hain.
+        permissions: [Permission.read(Role.users())],
+      });
+    } catch (error) {
+      // 409 = user already has access, that is fine
+      if (error?.code !== 409) throw error;
+    }
+
+    return { isPremium: true };
   },
 };
 

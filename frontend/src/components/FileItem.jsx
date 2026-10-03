@@ -4,16 +4,24 @@ import { removeFile, renameFile, toggleFileStar } from '../features/files/fileSl
 import { useState } from 'react';
 import ShareModal from './ShareModal';
 import toast from 'react-hot-toast';
+import { appwriteConfig } from '../lib/appwrite';
 
 function FileItem({ file }) {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
+  const isAdmin =
+    user?.$id === appwriteConfig.adminUserId ||
+    user?.prefs?.role === 'admin';
   const [showShare, setShowShare] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(file.title || '');
 
   const handleDelete = (e) => {
     e.stopPropagation();
+    if (!isAdmin) {
+      toast.error('Only admin can delete files.');
+      return;
+    }
     if (window.confirm('Are you sure you want to delete this file?')) {
       // FIX: Appwrite documents ki ID `$id` hoti hai, `_id` nahi (MongoDB convention thi)
       dispatch(removeFile(file.$id))
@@ -28,6 +36,10 @@ function FileItem({ file }) {
   };
 
   const handleRename = async (value = newTitle) => {
+    if (!isAdmin) {
+      toast.error('Only admin can rename files.');
+      return;
+    }
     const title = value.trim();
     setIsRenaming(false);
 
@@ -71,7 +83,7 @@ function FileItem({ file }) {
         </div>
         <div className="min-w-0 flex-1">
           {/* Defensive fallback: agar title missing ho (purana blank-card bug) to bhi crash na ho */}
-          {isRenaming ? (
+          {isRenaming && isAdmin ? (
             <input
               autoFocus
               value={newTitle}
@@ -94,11 +106,12 @@ function FileItem({ file }) {
               onClick={(event) => event.stopPropagation()}
               onDoubleClick={(event) => {
                 event.stopPropagation();
+                if (!isAdmin) return;
                 setNewTitle(file.title || '');
                 setIsRenaming(true);
               }}
-              title="Double-click to rename"
-              className="cursor-text truncate text-sm font-medium text-gray-900 dark:text-gray-100"
+              title={isAdmin ? 'Double-click to rename' : undefined}
+              className="cursor-default truncate text-sm font-medium text-gray-900 dark:text-gray-100"
             >
               {file.title || 'Untitled file'}
             </p>
@@ -119,24 +132,31 @@ function FileItem({ file }) {
           </div>
         </div>
         <div className="flex-shrink-0 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={(e) => { e.stopPropagation(); setShowShare(true); }}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
-            <Share2 className="h-4 w-4" />
-          </button>
+          {/* Share: admin only */}
+          {isAdmin && (
+            <button onClick={(e) => { e.stopPropagation(); setShowShare(true); }}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+              <Share2 className="h-4 w-4" />
+            </button>
+          )}
+          {/* Star: everyone */}
           <button onClick={handleToggleStar}
             aria-label={file.isStarred ? 'Remove star from file' : 'Star file'}
             title={file.isStarred ? 'Remove star' : 'Star file'}
             className={`p-1.5 rounded-lg transition-colors ${file.isStarred ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'}`}>
             <Star className="h-4 w-4" fill={file.isStarred ? 'currentColor' : 'none'} />
           </button>
-          <button onClick={handleDelete}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {/* Delete: admin only */}
+          {isAdmin && (
+            <button onClick={handleDelete}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {showShare && (
+      {showShare && isAdmin && (
         <ShareModal
           shareType="file"
           fileId={file.$id}

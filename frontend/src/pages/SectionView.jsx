@@ -7,10 +7,15 @@ import FileItem from '../components/FileItem';
 import ShareModal from '../components/ShareModal';
 import toast from 'react-hot-toast';
 import { FolderPlus, UploadCloud, ChevronLeft, Loader2, Link as LinkIcon, Share2, Search } from 'lucide-react';
+import { appwriteConfig } from '../lib/appwrite';
 
 function SectionView({ sectionName }) {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { folders, files, isLoading } = useSelector((state) => state.file);
+  const isAdmin =
+    user?.$id === appwriteConfig.adminUserId ||
+    user?.prefs?.role === 'admin';
   
   const [currentFolder, setCurrentFolder] = useState(null);
   const [folderHistory, setFolderHistory] = useState([]);
@@ -31,6 +36,10 @@ function SectionView({ sectionName }) {
   }, [dispatch, sectionName, currentFolder]);
 
   const handleCreateFolder = () => {
+    if (!isAdmin) {
+      toast.error('Only admin can create folders.');
+      return;
+    }
     const name = window.prompt('Enter folder name:'); 
     if (name && name.trim() !== '') {
       dispatch(createNewFolder({
@@ -44,6 +53,11 @@ function SectionView({ sectionName }) {
   };
 
   const handleFileUpload = (e) => {
+    if (!isAdmin) {
+      toast.error('Only admin can upload files.');
+      e.target.value = null;
+      return;
+    }
     const file = e.target.files[0];
     if (file) {
       const formData = new FormData();
@@ -144,6 +158,7 @@ function SectionView({ sectionName }) {
           </h1>
         </div>
         
+        {isAdmin && (
         <div className="flex items-center space-x-3">
           {sectionName === 'Question Banks' && (
             <select 
@@ -191,6 +206,7 @@ function SectionView({ sectionName }) {
             </label>
           )}
         </div>
+        )}
       </div>
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">

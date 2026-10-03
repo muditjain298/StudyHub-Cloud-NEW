@@ -21,6 +21,7 @@ import UsageGuide from './components/UsageGuide';
 
 import PremiumDashboard from './pages/PremiumDashboard';
 import AdminPanel from './pages/AdminPanel';
+import AdminAccess from './pages/AdminAccess';
 
 import PremiumRoute from './components/PremiumRoute';
 import AdminRoute from './components/AdminRoute';
@@ -239,6 +240,15 @@ function App() {
               element={
                 <AdminRoute>
                   <AdminPanel />
+                </AdminRoute>
+              }
+            />
+
+            <Route
+              path="admin/access"
+              element={
+                <AdminRoute>
+                  <AdminAccess />
                 </AdminRoute>
               }
             />

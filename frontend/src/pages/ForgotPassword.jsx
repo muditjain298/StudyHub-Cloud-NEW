@@ -124,6 +124,10 @@ export default function ForgotPassword() {
           link to reset your password.
         </p>
 
+        <p className="subtitle">
+          If you use your college email, the password reset email may land in your spam folder.
+        </p>
+
         <form onSubmit={handleForgot}>
           <div className="form-group">
             <label htmlFor="email">

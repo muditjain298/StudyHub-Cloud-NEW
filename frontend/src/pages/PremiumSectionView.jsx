@@ -15,7 +15,8 @@ import {
 import toast from 'react-hot-toast';
 
 import premiumService from '../features/premium/premiumService';
-import { appwriteConfig } from '../lib/appwrite';
+import { appwriteConfig, storage } from '../lib/appwrite';
+import PdfViewer from '../components/PdfViewer';
 
 function PremiumSectionView({ sectionName, onBack }) {
   const { user } = useSelector((state) => state.auth);
@@ -41,8 +42,14 @@ function PremiumSectionView({ sectionName, onBack }) {
   const [linkTitle, setLinkTitle] = useState('');
   const [savingLink, setSavingLink] = useState(false);
 
+  // PDF viewer state
+  const [viewingFile, setViewingFile] = useState(null); // { url, title }
+
   const isAdmin =
-    user?.$id === appwriteConfig.adminUserId;
+    user?.$id === appwriteConfig.adminUserId ||
+    user?.prefs?.role === 'admin';
+
+  const isPremiumUser = Boolean(user?.prefs?.isPremium) || isAdmin;
 
   // =========================================================
   // LOAD PREMIUM CONTENT
@@ -801,18 +808,45 @@ function PremiumSectionView({ sectionName, onBack }) {
                         </button>
                       </div>
 
+                      {/* FILE ACTIONS */}
                       <div className="mt-5 flex gap-2">
-                        <a
-                          href={file.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          {isVideo
-                            ? 'Watch'
-                            : 'Open'}
-                        </a>
+                        {isVideo ? (
+                          // Video links: open in new tab for everyone
+                          <a
+                            href={file.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Watch
+                          </a>
+                        ) : (
+                          // Non-video (PDF, etc): open in read-only viewer
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Build view URL from fileId if available; fall back to stored fileUrl
+                              const viewUrl =
+                                file.fileId && !file.fileId.startsWith('link-')
+                                  ? (() => {
+                                      const raw = storage.getFileView(
+                                        appwriteConfig.premiumBucketId,
+                                        file.fileId
+                                      );
+                                      return typeof raw === 'string'
+                                        ? raw
+                                        : raw?.href || raw?.toString();
+                                    })()
+                                  : file.fileUrl;
+                              setViewingFile({ url: viewUrl, title: file.title });
+                            }}
+                            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Open
+                          </button>
+                        )}
 
                         {isAdmin &&
                           file.userId ===
@@ -926,8 +960,17 @@ function PremiumSectionView({ sectionName, onBack }) {
           </div>
         </div>
       )}
+
+      {/* PDF VIEWER MODAL */}
+      {viewingFile && (
+        <PdfViewer
+          url={viewingFile.url}
+          title={viewingFile.title}
+          onClose={() => setViewingFile(null)}
+        />
+      )}
     </div>
   );
 }
 
-export default PremiumSectionView;
+export default PremiumSectionView;

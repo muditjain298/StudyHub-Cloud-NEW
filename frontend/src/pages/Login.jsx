@@ -136,6 +136,10 @@ function Login() {
             We'll send a reset link to your email.
           </p>
 
+          <p className="mb-5 text-sm text-amber-700 dark:text-amber-300">
+            If you use your college email, the password reset email may land in your spam folder.
+          </p>
+
           {forgotMessage ? (
             <div>
               <p className="auth-success">
@@ -343,6 +347,10 @@ function Login() {
           <div className="auth-divider">
             <span>Or</span>
           </div>
+
+          <p className="auth-subtitle mb-4 text-center">
+            First time here? Sign up with Google or GitHub. Returning users can log in with either.
+          </p>
 
           <div className="auth-socials">
 

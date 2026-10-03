@@ -69,13 +69,19 @@ export const appwriteConfig = {
 
     adminFunctionId:
         import.meta.env.VITE_APPWRITE_ADMIN_PREMIUM_FUNCTION_ID,
-        premiumFilesCollectionId:
-    import.meta.env.VITE_APPWRITE_PREMIUM_FILES_COLLECTION_ID ||
-    '6ab721400038768fe0d7',
 
-premiumFoldersCollectionId:
-    import.meta.env.VITE_APPWRITE_PREMIUM_FOLDERS_COLLECTION_ID ||
-    '6ab71e870017fda0e8b4',
+    premiumFilesCollectionId:
+        import.meta.env.VITE_APPWRITE_PREMIUM_FILES_COLLECTION_ID ||
+        '6ab721400038768fe0d7',
+
+    premiumFoldersCollectionId:
+        import.meta.env.VITE_APPWRITE_PREMIUM_FOLDERS_COLLECTION_ID ||
+        '6ab71e870017fda0e8b4',
+
+    // NEW: premium access table (admin grants / revokes)
+    premiumAccessCollectionId:
+        import.meta.env.VITE_APPWRITE_PREMIUM_ACCESS_COLLECTION_ID ||
+        '6ac0e7a6000bc4eeb622',
 };
 
 export { ID };
